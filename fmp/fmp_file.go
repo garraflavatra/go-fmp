@@ -12,19 +12,19 @@ const (
 	magicSequence = "\x00\x01\x00\x00\x00\x02\x00\x01\x00\x05\x00\x02\x00\x02\xC0"
 	hbamSequence  = "HBAM7"
 
-	magicSize  = len(magicSequence)
-	hbamSize   = len(hbamSequence)
-	sectorSize = 4096
+	magicSize        = len(magicSequence)
+	hbamSize         = len(hbamSequence)
+	sectorSize       = 4096
+	sectorHeaderSize = 20
 )
 
 type FmpFile struct {
-	Stream io.ReadSeeker
-
-	FileSize   uint
-	NumSectors uint
-
-	VersionDate     time.Time
-	ApplicationName string
+	VersionDate time.Time
+	CreatorName string
+	FileSize    uint
+	NumSectors  uint
+	Stream      io.ReadSeeker
+	Sectors     []*FmpSector
 }
 
 type FmpSector struct {
@@ -32,7 +32,7 @@ type FmpSector struct {
 	Level        uint8
 	PrevSectorID uint32
 	NextSectorID uint32
-	Payload      []byte
+	Chunks       []*FmpChunk
 }
 
 func OpenFile(path string) (*FmpFile, error) {
@@ -40,20 +40,30 @@ func OpenFile(path string) (*FmpFile, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	stream, err := os.Open(path)
 	if err != nil {
-		if stream != nil {
-			stream.Close()
-		}
 		return nil, err
 	}
+	defer stream.Close()
+
 	ctx := &FmpFile{Stream: stream}
 	if err := ctx.readHeader(); err != nil {
-		stream.Close()
 		return nil, err
 	}
+
 	ctx.FileSize = uint(info.Size())
 	ctx.NumSectors = ctx.FileSize / sectorSize
+	ctx.Sectors = make([]*FmpSector, ctx.NumSectors)
+
+	for i := uint(0); i < ctx.NumSectors; i++ {
+		sector, err := ctx.readSector()
+		if err != nil {
+			return nil, err
+		}
+		ctx.Sectors[i] = sector
+	}
+
 	return ctx, nil
 }
 
@@ -61,7 +71,7 @@ func (ctx *FmpFile) readHeader() error {
 	buf := make([]byte, sectorSize)
 	_, err := ctx.Stream.Read(buf)
 	if err != nil {
-		return ErrRead
+		return err
 	}
 	if !bytes.Equal(buf[:magicSize], []byte(magicSequence)) {
 		return ErrBadMagic
@@ -76,23 +86,57 @@ func (ctx *FmpFile) readHeader() error {
 	}
 
 	appNameLength := int(buf[541])
-	ctx.ApplicationName = string(buf[542 : 542+appNameLength])
+	ctx.CreatorName = string(buf[542 : 542+appNameLength])
 
 	return nil
 }
 
 func (ctx *FmpFile) readSector() (*FmpSector, error) {
-	buf := make([]byte, sectorSize)
-	_, err := ctx.Stream.Read(buf)
+	buf := make([]byte, sectorHeaderSize)
+	n, err := ctx.Stream.Read(buf)
+
+	if n == 0 {
+		return nil, io.EOF
+	}
 	if err != nil {
 		return nil, ErrRead
 	}
+
 	sector := &FmpSector{
 		Deleted:      buf[0] != 0,
 		Level:        uint8(buf[1]),
 		PrevSectorID: binary.BigEndian.Uint32(buf[2:6]),
 		NextSectorID: binary.BigEndian.Uint32(buf[6:10]),
-		Payload:      buf[6:4076],
 	}
+
+	payload := make([]byte, sectorSize-sectorHeaderSize)
+	n, err = ctx.Stream.Read(payload)
+	if n != sectorSize-sectorHeaderSize {
+		return nil, ErrRead
+	}
+	if err != nil {
+		return nil, ErrRead
+	}
+	sector.Chunks = make([]*FmpChunk, 0)
+
+	for {
+		chunk, err := ctx.readChunk(payload)
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			return nil, err
+		}
+		sector.Chunks = append(sector.Chunks, chunk)
+		if chunk == nil {
+			break
+		}
+		if chunk.Length == 0 {
+			panic("chunk length not set")
+		}
+		print(chunk.String() + "\n")
+		payload = payload[chunk.Length:]
+	}
+
 	return sector, nil
 }

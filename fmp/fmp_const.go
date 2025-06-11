@@ -1,5 +1,28 @@
 package fmp
 
+type FmpError string
+type FmpChunkType uint8
+
+func (e FmpError) Error() string { return string(e) }
+
+var (
+	ErrRead               = FmpError("read error")
+	ErrBadMagic           = FmpError("bad magic number")
+	ErrBadHeader          = FmpError("bad header")
+	ErrUnsupportedCharset = FmpError("unsupported character set")
+	ErrBadSectorCount     = FmpError("bad sector count")
+)
+
+const (
+	FMP_CHUNK_SIMPLE_DATA FmpChunkType = iota
+	FMP_CHUNK_SEGMENTED_DATA
+	FMP_CHUNK_SIMPLE_KEY_VALUE
+	FMP_CHUNK_LONG_KEY_VALUE
+	FMP_CHUNK_PATH_PUSH
+	FMP_CHUNK_PATH_POP
+	FMP_CHUNK_NOOP
+)
+
 const (
 	FMP_COLLATION_ENGLISH     = 0x00
 	FMP_COLLATION_FRENCH      = 0x01

@@ -13,10 +13,11 @@ func TestOpenFile(t *testing.T) {
 	if f.NumSectors != 96 {
 		t.Errorf("expected number of sectors to be 96, got %d", f.NumSectors)
 	}
-	if f.ApplicationName != "Pro 12.0" {
-		t.Errorf("expected application name to be 'Pro 12.0', got '%s'", f.ApplicationName)
+	if f.CreatorName != "Pro 12.0" {
+		t.Errorf("expected application name to be 'Pro 12.0', got '%s'", f.CreatorName)
 	}
 	if f.VersionDate.Format("2006-01-02") != "2025-01-11" {
 		t.Errorf("expected version date to be '2025-01-11', got '%s'", f.VersionDate.Format("2006-01-02"))
 	}
+	print(f.Sectors[0])
 }
