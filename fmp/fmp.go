@@ -2,6 +2,7 @@ package fmp
 
 import (
 	"bytes"
+	"encoding/binary"
 	"io"
 	"os"
 	"time"
@@ -17,12 +18,28 @@ const (
 )
 
 type FmpFile struct {
-	Stream          io.ReadSeeker
+	Stream io.ReadSeeker
+
+	FileSize   uint
+	NumSectors uint
+
 	VersionDate     time.Time
 	ApplicationName string
 }
 
+type FmpSector struct {
+	Deleted      bool
+	Level        uint8
+	PrevSectorID uint32
+	NextSectorID uint32
+	Payload      []byte
+}
+
 func OpenFile(path string) (*FmpFile, error) {
+	info, err := os.Stat(path)
+	if err != nil {
+		return nil, err
+	}
 	stream, err := os.Open(path)
 	if err != nil {
 		if stream != nil {
@@ -35,6 +52,8 @@ func OpenFile(path string) (*FmpFile, error) {
 		stream.Close()
 		return nil, err
 	}
+	ctx.FileSize = uint(info.Size())
+	ctx.NumSectors = ctx.FileSize / sectorSize
 	return ctx, nil
 }
 
@@ -60,4 +79,20 @@ func (ctx *FmpFile) readHeader() error {
 	ctx.ApplicationName = string(buf[542 : 542+appNameLength])
 
 	return nil
+}
+
+func (ctx *FmpFile) readSector() (*FmpSector, error) {
+	buf := make([]byte, sectorSize)
+	_, err := ctx.Stream.Read(buf)
+	if err != nil {
+		return nil, ErrRead
+	}
+	sector := &FmpSector{
+		Deleted:      buf[0] != 0,
+		Level:        uint8(buf[1]),
+		PrevSectorID: binary.BigEndian.Uint32(buf[2:6]),
+		NextSectorID: binary.BigEndian.Uint32(buf[6:10]),
+		Payload:      buf[6:4076],
+	}
+	return sector, nil
 }
