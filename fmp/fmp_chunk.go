@@ -128,16 +128,16 @@ func (ctx *FmpFile) readChunk(payload []byte) (*FmpChunk, error) {
 		length := payload[4]
 		return &FmpChunk{
 			Type:   FMP_CHUNK_LONG_KEY_VALUE,
-			Key:    parseVarUint32(payload[1 : 1+3]), // todo, won't work?
+			Key:    parseVarUint32(payload[1 : 1+3]),
 			Value:  payload[5 : 5+length],
 			Length: 5 + uint32(length),
 		}, nil
 	}
 	if payload[0] == 0x17 {
-		length := parseVarUint32(payload[1 : 1+3]) // todo, won't work?
+		length := uint32(binary.BigEndian.Uint16(payload[4 : 4+2]))
 		return &FmpChunk{
 			Type:   FMP_CHUNK_LONG_KEY_VALUE,
-			Key:    uint32(binary.BigEndian.Uint16(payload[4 : 4+2])),
+			Key:    uint32(binary.BigEndian.Uint16(payload[1 : 1+2])),
 			Value:  payload[6 : 6+length],
 			Length: 6 + uint32(length),
 		}, nil
@@ -175,12 +175,12 @@ func (ctx *FmpFile) readChunk(payload []byte) (*FmpChunk, error) {
 		}, nil
 	}
 	if payload[0] == 0x0F {
-		length := binary.BigEndian.Uint16(payload[3 : 3+2])
+		length := uint32(binary.BigEndian.Uint16(payload[3 : 3+2]))
 		return &FmpChunk{
 			Type:   FMP_CHUNK_SEGMENTED_DATA,
 			Index:  uint32(binary.BigEndian.Uint16(payload[1 : 1+2])),
 			Value:  payload[5 : 5+length],
-			Length: 5 + uint32(length),
+			Length: 5 + length,
 		}, nil
 	}
 
