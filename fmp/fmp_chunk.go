@@ -2,7 +2,6 @@ package fmp
 
 import (
 	"encoding/binary"
-	"fmt"
 )
 
 type FmpChunk struct {
@@ -11,10 +10,6 @@ type FmpChunk struct {
 	Key    uint32 // If Type == FMP_CHUNK_SHORT_KEY_VALUE or FMP_CHUNK_LONG_KEY_VALUE
 	Index  uint32 // Segment index, if Type == FMP_CHUNK_SEGMENTED_DATA
 	Value  []byte
-}
-
-func (c *FmpChunk) String() string {
-	return fmt.Sprintf("<%v(%v)>", c.Type, c.Length)
 }
 
 func (ctx *FmpFile) readChunk(payload []byte) (*FmpChunk, error) {
