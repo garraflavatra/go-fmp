@@ -2,6 +2,8 @@ package fmp
 
 import (
 	"bytes"
+	"encoding/hex"
+	"fmt"
 	"io"
 	"os"
 	"time"
@@ -29,18 +31,18 @@ func OpenFile(path string) (*FmpFile, error) {
 	}
 	defer stream.Close()
 
-	ctx := &FmpFile{Stream: stream, Dictionary: &FmpDict{}}
+	ctx := &FmpFile{stream: stream, Dictionary: &FmpDict{}}
 	if err := ctx.readHeader(); err != nil {
 		return nil, err
 	}
 
 	ctx.FileSize = uint(info.Size())
-	ctx.NumSectors = ctx.FileSize / sectorSize
-	ctx.Sectors = make([]*FmpSector, ctx.NumSectors)
+	ctx.numSectors = ctx.FileSize / sectorSize
+	ctx.Sectors = make([]*FmpSector, ctx.numSectors)
 
 	currentPath := make([]uint64, 0)
 
-	for i := uint(0); i < ctx.NumSectors; i++ {
+	for i := uint(0); i < ctx.numSectors; i++ {
 		sector, err := ctx.readSector()
 		if err == io.EOF {
 			break
@@ -94,7 +96,7 @@ func OpenFile(path string) (*FmpFile, error) {
 
 func (ctx *FmpFile) readHeader() error {
 	buf := make([]byte, sectorSize)
-	_, err := ctx.Stream.Read(buf)
+	_, err := ctx.stream.Read(buf)
 	if err != nil {
 		return err
 	}
@@ -118,7 +120,7 @@ func (ctx *FmpFile) readHeader() error {
 
 func (ctx *FmpFile) readSector() (*FmpSector, error) {
 	buf := make([]byte, sectorHeaderSize)
-	n, err := ctx.Stream.Read(buf)
+	n, err := ctx.stream.Read(buf)
 
 	if n == 0 {
 		return nil, io.EOF
@@ -135,7 +137,7 @@ func (ctx *FmpFile) readSector() (*FmpSector, error) {
 	}
 
 	payload := make([]byte, sectorSize-sectorHeaderSize)
-	n, err = ctx.Stream.Read(payload)
+	n, err = ctx.stream.Read(payload)
 	if n != sectorSize-sectorHeaderSize {
 		return nil, ErrRead
 	}
@@ -146,6 +148,9 @@ func (ctx *FmpFile) readSector() (*FmpSector, error) {
 
 	for {
 		chunk, err := ctx.readChunk(payload)
+		if chunk != nil {
+			fmt.Printf("%s - (type%v)\n", hex.EncodeToString([]byte{payload[0]}), int(chunk.Type))
+		}
 		if err == io.EOF {
 			break
 		}

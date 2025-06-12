@@ -9,11 +9,12 @@ type FmpFile struct {
 	VersionDate time.Time
 	CreatorName string
 	FileSize    uint
-	NumSectors  uint
-	Stream      io.ReadSeeker
 	Sectors     []*FmpSector
 	Chunks      []*FmpChunk
 	Dictionary  *FmpDict
+
+	numSectors uint
+	stream     io.ReadSeeker
 }
 
 type FmpSector struct {

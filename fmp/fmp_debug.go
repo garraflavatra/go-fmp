@@ -3,7 +3,6 @@ package fmp
 import (
 	"fmt"
 	"os"
-	"strings"
 )
 
 func (f *FmpFile) ToDebugFile(fname string) {
@@ -36,11 +35,18 @@ func (c *FmpChunk) String() string {
 	return fmt.Sprintf("<%v(%v)>", c.Type, c.Length)
 }
 
-func (dict *FmpDict) String() string {
+func (dict *FmpDict) string(parentPath string) string {
 	s := ""
 	for k, v := range *dict {
-		ns := strings.ReplaceAll(v.Children.String(), "\n", "\n\t")
-		s += fmt.Sprintf("%v: %v\n%v\n", k, string(v.Value), ns)
+		s += fmt.Sprintf("%v%v: %v\n", parentPath, k, string(v.Value))
+
+		if v.Children != nil {
+			s += v.Children.string(fmt.Sprintf("%v%v.", parentPath, k))
+		}
 	}
 	return s
+}
+
+func (dict *FmpDict) String() string {
+	return dict.string("")
 }

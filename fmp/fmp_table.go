@@ -3,28 +3,31 @@ package fmp
 func (ctx *FmpFile) Tables() []*FmpTable {
 	tables := make([]*FmpTable, 0)
 
-	for _, chunk := range ctx.Chunks {
-		if chunk.Key != 3 || chunk.Type != FMP_CHUNK_SIMPLE_KEY_VALUE {
+	for key, ent := range *ctx.Dictionary {
+		if key != 3 {
 			continue
 		}
+		println("Found a 3")
 
-		for _, chunk = range ctx.Chunks {
-			if chunk.Key != 16 {
+		for key, ent = range *ent.Children {
+			if key != 16 {
 				continue
 			}
+			println("Found a 3.16")
 
-			for _, chunk = range ctx.Chunks {
-				if chunk.Key != 5 {
+			for key, ent = range *ent.Children {
+				if key != 5 {
 					continue
 				}
+				println("Found a 3.16.5")
 
-				for tablePath, chunk := range ctx.Chunks {
-					if chunk.Key >= 128 {
+				for tablePath := range *ent.Children {
+					if key >= 128 {
 						continue
 					}
 
 					// Found a table!
-					println("Found one at", tablePath)
+					println("Found a table at 3.16.5.", tablePath)
 				}
 			}
 		}

@@ -2,10 +2,7 @@ package fmp
 
 func parseVarUint64(payload []byte) uint64 {
 	var length uint64
-	n := len(payload)
-	if n > 8 {
-		n = 8 // clamp to max uint64
-	}
+	n := min(len(payload), 8) // clamp to uint64
 	for i := range n {
 		length <<= 8
 		length |= uint64(payload[i])

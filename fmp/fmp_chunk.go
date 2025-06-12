@@ -26,27 +26,27 @@ func (ctx *FmpFile) readChunk(payload []byte) (*FmpChunk, error) {
 		}, nil
 	}
 	if 0x10 <= payload[0] && payload[0] <= 0x11 {
-		length := 3 + (payload[0] - 0x10)
+		valueLength := 3 + (payload[0] - 0x10)
 		return &FmpChunk{
 			Type:   FMP_CHUNK_SIMPLE_DATA,
-			Value:  payload[1 : 1+length],
-			Length: 1 + uint64(length),
+			Value:  payload[1 : 1+valueLength],
+			Length: 1 + uint64(valueLength),
 		}, nil
 	}
 	if 0x12 <= payload[0] && payload[0] <= 0x15 {
-		length := 1 + 2*(payload[0]-0x10)
+		valueLength := 1 + 2*(payload[0]-0x10)
 		return &FmpChunk{
 			Type:   FMP_CHUNK_SIMPLE_DATA,
-			Value:  payload[1 : 1+length],
-			Length: 1 + uint64(length),
+			Value:  payload[1 : 1+valueLength],
+			Length: 1 + uint64(valueLength),
 		}, nil
 	}
 	if 0x1A <= payload[0] && payload[0] <= 0x1D {
-		length := 2 * (payload[0] - 0x19)
+		valueLength := 2 * (payload[0] - 0x19)
 		return &FmpChunk{
 			Type:   FMP_CHUNK_SIMPLE_DATA,
-			Value:  payload[1 : 1+length],
-			Length: 1 + uint64(length),
+			Value:  payload[1 : 1+valueLength],
+			Length: 1 + uint64(valueLength),
 		}, nil
 	}
 
@@ -61,68 +61,68 @@ func (ctx *FmpFile) readChunk(payload []byte) (*FmpChunk, error) {
 		}, nil
 	}
 	if 0x02 <= payload[0] && payload[0] <= 0x05 {
-		length := 2 * (payload[0] - 1)
+		valueLength := 2 * (payload[0] - 1)
 		return &FmpChunk{
 			Type:   FMP_CHUNK_SIMPLE_KEY_VALUE,
 			Key:    uint64(payload[1]),
-			Value:  payload[2 : 2+length],
-			Length: 2 + uint64(length),
+			Value:  payload[2 : 2+valueLength],
+			Length: 2 + uint64(valueLength),
 		}, nil
 	}
 	if payload[0] == 0x06 {
-		length := payload[2]
+		valueLength := payload[2]
 		return &FmpChunk{
 			Type:   FMP_CHUNK_SIMPLE_KEY_VALUE,
 			Key:    uint64(payload[1]),
-			Value:  payload[3 : 3+length], // docs say offset 2?
-			Length: 3 + uint64(length),
+			Value:  payload[2 : 2+valueLength], // docs say offset 2?
+			Length: 3 + uint64(valueLength),
 		}, nil
 	}
 	if payload[0] == 0x09 {
 		return &FmpChunk{
 			Type:   FMP_CHUNK_SIMPLE_KEY_VALUE,
-			Key:    parseVarUint64(payload[1:3]),
-			Value:  payload[3 : 3+1], // docs say offset 2?
+			Key:    parseVarUint64(payload[1 : 1+2]),
+			Value:  payload[3 : 3+1],
 			Length: 4,
 		}, nil
 	}
 	if 0x0A <= payload[0] && payload[0] <= 0x0D {
-		length := 2 * (payload[0] - 9)
+		valueLength := 2 * (payload[0] - 0x09)
 		return &FmpChunk{
 			Type:   FMP_CHUNK_SIMPLE_KEY_VALUE,
-			Key:    parseVarUint64(payload[1:3]),
-			Value:  payload[3 : 3+length], // docs say offset 2?
-			Length: 2 + uint64(length),
+			Key:    parseVarUint64(payload[1 : 1+2]),
+			Value:  payload[3 : 3+valueLength],
+			Length: 2 + uint64(valueLength),
 		}, nil
 	}
 	if payload[0] == 0x0E {
-		length := payload[2]
+		valueLength := payload[2]
 		return &FmpChunk{
 			Type:   FMP_CHUNK_SIMPLE_KEY_VALUE,
-			Key:    parseVarUint64(payload[1:3]),
-			Value:  payload[4 : 4+length], // docs say offset 2?
-			Length: 4 + uint64(length),
+			Key:    parseVarUint64(payload[1 : 1+2]),
+			Value:  payload[4 : 4+valueLength],
+			Length: 4 + uint64(valueLength),
 		}, nil
 	}
 
 	// Long key-value
 
 	if payload[0] == 0x16 {
-		length := payload[4]
+		valueLength := payload[4]
 		return &FmpChunk{
 			Type:   FMP_CHUNK_LONG_KEY_VALUE,
 			Key:    parseVarUint64(payload[1 : 1+3]),
-			Value:  payload[5 : 5+length],
-			Length: 5 + uint64(length),
+			Value:  payload[5 : 5+valueLength],
+			Length: 5 + uint64(valueLength),
 		}, nil
 	}
 	if payload[0] == 0x17 {
-		length := parseVarUint64(payload[4 : 4+2])
+		valueLength := parseVarUint64(payload[4 : 4+2])
 		return &FmpChunk{
 			Type:   FMP_CHUNK_LONG_KEY_VALUE,
-			Key:    parseVarUint64(payload[1 : 1+2]),
-			Value:  payload[6 : 6+length],
-			Length: 6 + uint64(length),
+			Key:    parseVarUint64(payload[1 : 1+3]),
+			Value:  payload[6 : 6+valueLength],
+			Length: 6 + uint64(valueLength),
 		}, nil
 	}
 	if payload[0] == 0x1E {
@@ -132,7 +132,7 @@ func (ctx *FmpFile) readChunk(payload []byte) (*FmpChunk, error) {
 			Type:   FMP_CHUNK_LONG_KEY_VALUE,
 			Key:    parseVarUint64(payload[2 : 2+keyLength]),
 			Value:  payload[2+keyLength+1 : 2+keyLength+1+valueLength],
-			Length: 3 + uint64(keyLength) + uint64(valueLength),
+			Length: 2 + uint64(keyLength) + 1 + uint64(valueLength),
 		}, nil
 	}
 	if payload[0] == 0x1F {
@@ -149,23 +149,23 @@ func (ctx *FmpFile) readChunk(payload []byte) (*FmpChunk, error) {
 	// Segmented data
 
 	if payload[0] == 0x07 {
-		length := parseVarUint64(payload[2 : 2+2])
-		payloadLimit := min(4+length, uint64(len(payload)))
+		valueLength := parseVarUint64(payload[2 : 2+2])
+		payloadLimit := min(4+valueLength, uint64(len(payload)))
 		return &FmpChunk{
 			Type:   FMP_CHUNK_SEGMENTED_DATA,
 			Index:  uint64(payload[1]),
 			Value:  payload[4:payloadLimit],
-			Length: 4 + uint64(length),
+			Length: 4 + uint64(valueLength),
 		}, nil
 	}
 	if payload[0] == 0x0F {
-		length := parseVarUint64(payload[3 : 3+2])
-		payloadLimit := min(5+length, uint64(len(payload)))
+		valueLength := parseVarUint64(payload[3 : 3+2])
+		payloadLimit := min(5+valueLength, uint64(len(payload)))
 		return &FmpChunk{
 			Type:   FMP_CHUNK_SEGMENTED_DATA,
 			Index:  parseVarUint64(payload[1 : 1+2]),
 			Value:  payload[5:payloadLimit],
-			Length: 5 + length,
+			Length: 5 + valueLength,
 		}, nil
 	}
 
@@ -200,17 +200,17 @@ func (ctx *FmpFile) readChunk(payload []byte) (*FmpChunk, error) {
 		}, nil
 	}
 	if payload[0] == 0x38 {
-		length := payload[1]
+		valueLength := payload[1]
 		return &FmpChunk{
 			Type:   FMP_CHUNK_PATH_PUSH,
-			Value:  payload[2 : 2+length],
-			Length: 2 + uint64(length),
+			Value:  payload[2 : 2+valueLength],
+			Length: 2 + uint64(valueLength),
 		}, nil
 	}
 
 	// Path pop
 
-	if payload[0] == 0x3D && payload[1] == 0x40 {
+	if payload[0] == 0x3D || payload[0] == 0x40 {
 		return &FmpChunk{
 			Type:   FMP_CHUNK_PATH_POP,
 			Length: 1,
