@@ -19,5 +19,4 @@ func TestOpenFile(t *testing.T) {
 	if f.VersionDate.Format("2006-01-02") != "2025-01-11" {
 		t.Errorf("expected version date to be '2025-01-11', got '%s'", f.VersionDate.Format("2006-01-02"))
 	}
-	print(f.Sectors[0])
 }

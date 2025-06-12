@@ -3,7 +3,6 @@ package fmp
 import (
 	"bytes"
 	"encoding/binary"
-	"encoding/hex"
 	"io"
 	"os"
 	"time"
@@ -58,8 +57,10 @@ func OpenFile(path string) (*FmpFile, error) {
 	ctx.Sectors = make([]*FmpSector, ctx.NumSectors)
 
 	for i := uint(0); i < ctx.NumSectors; i++ {
-		println("reading sector ", i)
 		sector, err := ctx.readSector()
+		if err == io.EOF {
+			break
+		}
 		if err != nil {
 			return nil, err
 		}
@@ -122,7 +123,6 @@ func (ctx *FmpFile) readSector() (*FmpSector, error) {
 	sector.Chunks = make([]*FmpChunk, 0)
 
 	for {
-		println(hex.EncodeToString(payload[0:2]))
 		chunk, err := ctx.readChunk(payload)
 		if err == io.EOF {
 			break
@@ -138,7 +138,7 @@ func (ctx *FmpFile) readSector() (*FmpSector, error) {
 			panic("chunk length not set")
 		}
 		payload = payload[min(chunk.Length, uint32(len(payload))):]
-		if len(payload) == 0 {
+		if len(payload) == 0 || (len(payload) == 1 && payload[0] == 0x00) {
 			break
 		}
 	}
