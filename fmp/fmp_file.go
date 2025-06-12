@@ -25,6 +25,7 @@ type FmpFile struct {
 	NumSectors  uint
 	Stream      io.ReadSeeker
 	Sectors     []*FmpSector
+	Chunks      []*FmpChunk
 }
 
 type FmpSector struct {
@@ -65,6 +66,7 @@ func OpenFile(path string) (*FmpFile, error) {
 			return nil, err
 		}
 		ctx.Sectors[i] = sector
+		ctx.Chunks = append(ctx.Chunks, sector.Chunks...)
 	}
 
 	return ctx, nil
@@ -130,13 +132,13 @@ func (ctx *FmpFile) readSector() (*FmpSector, error) {
 		if err != nil {
 			return nil, err
 		}
-		sector.Chunks = append(sector.Chunks, chunk)
 		if chunk == nil {
 			break
 		}
 		if chunk.Length == 0 {
 			panic("chunk length not set")
 		}
+		sector.Chunks = append(sector.Chunks, chunk)
 		payload = payload[min(chunk.Length, uint32(len(payload))):]
 		if len(payload) == 0 || (len(payload) == 1 && payload[0] == 0x00) {
 			break
