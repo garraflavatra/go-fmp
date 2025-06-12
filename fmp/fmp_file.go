@@ -2,7 +2,6 @@ package fmp
 
 import (
 	"bytes"
-	"encoding/binary"
 	"io"
 	"os"
 	"time"
@@ -39,7 +38,7 @@ func OpenFile(path string) (*FmpFile, error) {
 	ctx.NumSectors = ctx.FileSize / sectorSize
 	ctx.Sectors = make([]*FmpSector, ctx.NumSectors)
 
-	currentPath := make([]uint16, 0)
+	currentPath := make([]uint64, 0)
 
 	for i := uint(0); i < ctx.NumSectors; i++ {
 		sector, err := ctx.readSector()
@@ -55,7 +54,7 @@ func OpenFile(path string) (*FmpFile, error) {
 		for _, chunk := range sector.Chunks {
 			switch chunk.Type {
 			case FMP_CHUNK_PATH_PUSH:
-				currentPath = append(currentPath, uint16(chunk.Value[0]))
+				currentPath = append(currentPath, uint64(chunk.Value[0]))
 
 			case FMP_CHUNK_PATH_POP:
 				if len(currentPath) > 0 {
@@ -74,13 +73,13 @@ func OpenFile(path string) (*FmpFile, error) {
 
 			case FMP_CHUNK_SIMPLE_KEY_VALUE:
 				ctx.Dictionary.set(
-					append(currentPath, uint16(chunk.Key)),
+					append(currentPath, uint64(chunk.Key)),
 					chunk.Value,
 				)
 
 			case FMP_CHUNK_LONG_KEY_VALUE:
 				ctx.Dictionary.set(
-					append(currentPath, uint16(chunk.Key)), // todo: ??
+					append(currentPath, uint64(chunk.Key)), // todo: ??
 					chunk.Value,
 				)
 
@@ -131,8 +130,8 @@ func (ctx *FmpFile) readSector() (*FmpSector, error) {
 	sector := &FmpSector{
 		Deleted:      buf[0] != 0,
 		Level:        uint8(buf[1]),
-		PrevSectorID: binary.BigEndian.Uint32(buf[2:6]),
-		NextSectorID: binary.BigEndian.Uint32(buf[6:10]),
+		PrevSectorID: parseVarUint64(buf[2:6]),
+		NextSectorID: parseVarUint64(buf[6:10]),
 	}
 
 	payload := make([]byte, sectorSize-sectorHeaderSize)
@@ -160,7 +159,7 @@ func (ctx *FmpFile) readSector() (*FmpSector, error) {
 			panic("chunk length not set")
 		}
 		sector.Chunks = append(sector.Chunks, chunk)
-		payload = payload[min(chunk.Length, uint32(len(payload))):]
+		payload = payload[min(chunk.Length, uint64(len(payload))):]
 		if len(payload) == 0 || (len(payload) == 1 && payload[0] == 0x00) {
 			break
 		}

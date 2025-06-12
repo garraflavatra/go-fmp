@@ -19,20 +19,20 @@ type FmpFile struct {
 type FmpSector struct {
 	Deleted      bool
 	Level        uint8
-	PrevSectorID uint32
-	NextSectorID uint32
+	PrevSectorID uint64
+	NextSectorID uint64
 	Chunks       []*FmpChunk
 }
 
 type FmpChunk struct {
 	Type   FmpChunkType
-	Length uint32
-	Key    uint32 // If Type == FMP_CHUNK_SHORT_KEY_VALUE or FMP_CHUNK_LONG_KEY_VALUE
-	Index  uint32 // Segment index, if Type == FMP_CHUNK_SEGMENTED_DATA
+	Length uint64
+	Key    uint64 // If Type == FMP_CHUNK_SHORT_KEY_VALUE or FMP_CHUNK_LONG_KEY_VALUE
+	Index  uint64 // Segment index, if Type == FMP_CHUNK_SEGMENTED_DATA
 	Value  []byte
 }
 
-type FmpDict map[uint16]*FmpDictEntry
+type FmpDict map[uint64]*FmpDictEntry
 
 type FmpDictEntry struct {
 	Value    []byte
@@ -43,7 +43,7 @@ type FmpTable struct {
 	Name string
 }
 
-func (dict *FmpDict) get(path []uint16) *FmpDictEntry {
+func (dict *FmpDict) get(path []uint64) *FmpDictEntry {
 	for i, key := range path {
 		_, ok := (*dict)[key]
 		if !ok {
@@ -59,7 +59,7 @@ func (dict *FmpDict) get(path []uint16) *FmpDictEntry {
 	return nil
 }
 
-func (dict *FmpDict) getValue(path []uint16) []byte {
+func (dict *FmpDict) getValue(path []uint64) []byte {
 	ent := dict.get(path)
 	if ent != nil {
 		return ent.Value
@@ -67,7 +67,7 @@ func (dict *FmpDict) getValue(path []uint16) []byte {
 	return nil
 }
 
-func (dict *FmpDict) set(path []uint16, value []byte) {
+func (dict *FmpDict) set(path []uint64, value []byte) {
 	for i, key := range path {
 		_, ok := (*dict)[key]
 		if !ok {
