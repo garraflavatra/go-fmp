@@ -69,7 +69,7 @@ func OpenFile(path string) (*FmpFile, error) {
 				// Todo: take index into account
 				ctx.Dictionary.set(
 					currentPath,
-					append(ctx.Dictionary.get(currentPath), chunk.Value...),
+					append(ctx.Dictionary.getValue(currentPath), chunk.Value...),
 				)
 
 			case FMP_CHUNK_SIMPLE_KEY_VALUE:
