@@ -47,7 +47,7 @@ func (dict *FmpDict) get(path []uint64) *FmpDictEntry {
 	for i, key := range path {
 		_, ok := (*dict)[key]
 		if !ok {
-			(*dict)[key] = &FmpDictEntry{Children: &FmpDict{}}
+			return nil
 		}
 
 		if i == len(path)-1 {
