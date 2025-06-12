@@ -4,14 +4,6 @@ import (
 	"encoding/binary"
 )
 
-type FmpChunk struct {
-	Type   FmpChunkType
-	Length uint32
-	Key    uint32 // If Type == FMP_CHUNK_SHORT_KEY_VALUE or FMP_CHUNK_LONG_KEY_VALUE
-	Index  uint32 // Segment index, if Type == FMP_CHUNK_SEGMENTED_DATA
-	Value  []byte
-}
-
 func (ctx *FmpFile) readChunk(payload []byte) (*FmpChunk, error) {
 
 	// Simple data

@@ -18,24 +18,6 @@ const (
 	sectorHeaderSize = 20
 )
 
-type FmpFile struct {
-	VersionDate time.Time
-	CreatorName string
-	FileSize    uint
-	NumSectors  uint
-	Stream      io.ReadSeeker
-	Sectors     []*FmpSector
-	Chunks      []*FmpChunk
-}
-
-type FmpSector struct {
-	Deleted      bool
-	Level        uint8
-	PrevSectorID uint32
-	NextSectorID uint32
-	Chunks       []*FmpChunk
-}
-
 func OpenFile(path string) (*FmpFile, error) {
 	info, err := os.Stat(path)
 	if err != nil {
@@ -48,7 +30,7 @@ func OpenFile(path string) (*FmpFile, error) {
 	}
 	defer stream.Close()
 
-	ctx := &FmpFile{Stream: stream}
+	ctx := &FmpFile{Stream: stream, Dictionary: &FmpDict{}}
 	if err := ctx.readHeader(); err != nil {
 		return nil, err
 	}
@@ -56,6 +38,8 @@ func OpenFile(path string) (*FmpFile, error) {
 	ctx.FileSize = uint(info.Size())
 	ctx.NumSectors = ctx.FileSize / sectorSize
 	ctx.Sectors = make([]*FmpSector, ctx.NumSectors)
+
+	currentPath := make([]uint16, 0)
 
 	for i := uint(0); i < ctx.NumSectors; i++ {
 		sector, err := ctx.readSector()
@@ -67,6 +51,43 @@ func OpenFile(path string) (*FmpFile, error) {
 		}
 		ctx.Sectors[i] = sector
 		ctx.Chunks = append(ctx.Chunks, sector.Chunks...)
+
+		for _, chunk := range sector.Chunks {
+			switch chunk.Type {
+			case FMP_CHUNK_PATH_PUSH:
+				currentPath = append(currentPath, uint16(chunk.Value[0]))
+
+			case FMP_CHUNK_PATH_POP:
+				if len(currentPath) > 0 {
+					currentPath = currentPath[:len(currentPath)-1]
+				}
+
+			case FMP_CHUNK_SIMPLE_DATA:
+				ctx.Dictionary.set(currentPath, chunk.Value)
+
+			case FMP_CHUNK_SEGMENTED_DATA:
+				// Todo: take index into account
+				ctx.Dictionary.set(
+					currentPath,
+					append(ctx.Dictionary.get(currentPath), chunk.Value...),
+				)
+
+			case FMP_CHUNK_SIMPLE_KEY_VALUE:
+				ctx.Dictionary.set(
+					append(currentPath, uint16(chunk.Key)),
+					chunk.Value,
+				)
+
+			case FMP_CHUNK_LONG_KEY_VALUE:
+				ctx.Dictionary.set(
+					append(currentPath, uint16(chunk.Key)), // todo: ??
+					chunk.Value,
+				)
+
+			case FMP_CHUNK_NOOP:
+				// noop
+			}
+		}
 	}
 
 	return ctx, nil
