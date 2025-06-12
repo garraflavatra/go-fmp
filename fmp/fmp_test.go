@@ -20,5 +20,5 @@ func TestOpenFile(t *testing.T) {
 		t.Errorf("expected version date to be '2025-01-11', got '%s'", f.VersionDate.Format("2006-01-02"))
 	}
 
-	f.ToDebugFile("../private/output.txt")
+	f.ToDebugFile("../private/output")
 }
