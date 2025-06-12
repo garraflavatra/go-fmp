@@ -137,7 +137,10 @@ func (ctx *FmpFile) readSector() (*FmpSector, error) {
 		if chunk.Length == 0 {
 			panic("chunk length not set")
 		}
-		payload = payload[chunk.Length:]
+		payload = payload[min(chunk.Length, uint32(len(payload))):]
+		if len(payload) == 0 {
+			break
+		}
 	}
 
 	return sector, nil

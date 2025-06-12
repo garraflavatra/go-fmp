@@ -167,19 +167,21 @@ func (ctx *FmpFile) readChunk(payload []byte) (*FmpChunk, error) {
 
 	if payload[0] == 0x07 {
 		length := binary.BigEndian.Uint16(payload[2 : 2+2])
+		payloadLimit := min(4+length, uint16(len(payload)))
 		return &FmpChunk{
 			Type:   FMP_CHUNK_SEGMENTED_DATA,
 			Index:  uint32(payload[1]),
-			Value:  payload[4 : 4+length],
+			Value:  payload[4:payloadLimit],
 			Length: 4 + uint32(length),
 		}, nil
 	}
 	if payload[0] == 0x0F {
 		length := uint32(binary.BigEndian.Uint16(payload[3 : 3+2]))
+		payloadLimit := min(5+length, uint32(len(payload)))
 		return &FmpChunk{
 			Type:   FMP_CHUNK_SEGMENTED_DATA,
 			Index:  uint32(binary.BigEndian.Uint16(payload[1 : 1+2])),
-			Value:  payload[5 : 5+length],
+			Value:  payload[5:payloadLimit],
 			Length: 5 + length,
 		}, nil
 	}
