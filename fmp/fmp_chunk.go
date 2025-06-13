@@ -1,7 +1,5 @@
 package fmp
 
-import "fmt"
-
 func (ctx *FmpFile) readChunk(payload []byte) (*FmpChunk, error) {
 
 	// Simple data
@@ -228,5 +226,5 @@ func (ctx *FmpFile) readChunk(payload []byte) (*FmpChunk, error) {
 		}, nil
 	}
 
-	return nil, fmt.Errorf("unknown chunk type 0x%02X", payload[0])
+	return nil, ErrBadChunk
 }

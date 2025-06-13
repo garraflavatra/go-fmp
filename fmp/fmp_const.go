@@ -12,6 +12,7 @@ var (
 	ErrUnsupportedCharset = FmpError("unsupported character set")
 	ErrBadSectorCount     = FmpError("bad sector count")
 	ErrBadSectorHeader    = FmpError("bad sector header")
+	ErrBadChunk           = FmpError("bad chunk")
 )
 
 const (
