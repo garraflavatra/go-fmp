@@ -1,4 +1,4 @@
-module fmp
+module github.com/garraflavatra/go-fmp
 
 go 1.23.0
 
