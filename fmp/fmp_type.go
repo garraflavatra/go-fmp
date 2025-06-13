@@ -27,6 +27,7 @@ type FmpSector struct {
 	NextID  uint64
 	Prev    *FmpSector
 	Next    *FmpSector
+	Payload []byte
 	Chunks  []*FmpChunk
 }
 

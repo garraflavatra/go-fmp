@@ -1,6 +1,96 @@
 package fmp
 
-func (ctx *FmpFile) readChunk(payload []byte) (*FmpChunk, error) {
+import (
+	"fmt"
+	"io"
+)
+
+func (sect *FmpSector) readChunks() error {
+	for {
+		pos := (sect.ID+2)*sectorSize - uint64(len(sect.Payload))
+
+		chunk, err := sect.readChunk(sect.Payload)
+		if chunk == nil {
+			fmt.Printf("0x%02x (pos %v, unknown)\n", sect.Payload[0], pos)
+		} else {
+			fmt.Printf("0x%02x (pos %v, type %v)\n", sect.Payload[0], pos, int(chunk.Type))
+		}
+
+		if err == io.EOF {
+			println("break1")
+			break
+		}
+		if err != nil {
+			println(string(sect.Payload))
+			println("break2")
+			return err
+		}
+		if chunk == nil {
+			println("break3")
+			break
+		}
+		if chunk.Length == 0 {
+			panic("chunk length not set")
+		}
+
+		sect.Chunks = append(sect.Chunks, chunk)
+		sect.Payload = sect.Payload[min(chunk.Length, uint64(len(sect.Payload))):]
+
+		if len(sect.Payload) == 0 || (len(sect.Payload) == 1 && sect.Payload[0] == 0x00) {
+			break
+		}
+	}
+	return nil
+}
+
+func (sect *FmpSector) processChunks(dict *FmpDict, currentPath *[]uint64) {
+	for _, chunk := range sect.Chunks {
+		switch chunk.Type {
+		case FMP_CHUNK_PATH_PUSH:
+			*currentPath = append(*currentPath, uint64(chunk.Value[0]))
+
+		case FMP_CHUNK_PATH_POP:
+			if len(*currentPath) > 0 {
+				*currentPath = (*currentPath)[:len(*currentPath)-1]
+			}
+
+		case FMP_CHUNK_SIMPLE_DATA:
+			dict.set(*currentPath, chunk.Value)
+
+		case FMP_CHUNK_SEGMENTED_DATA:
+			// Todo: take index into account
+			dict.set(
+				*currentPath,
+				append(dict.getValue(*currentPath), chunk.Value...),
+			)
+
+		case FMP_CHUNK_SIMPLE_KEY_VALUE:
+			dict.set(
+				append(*currentPath, uint64(chunk.Key)),
+				chunk.Value,
+			)
+
+		case FMP_CHUNK_LONG_KEY_VALUE:
+			dict.set(
+				append(*currentPath, uint64(chunk.Key)), // todo: ??
+				chunk.Value,
+			)
+
+		case FMP_CHUNK_NOOP:
+			// noop
+		}
+
+		if chunk.Delayed {
+			if len(*currentPath) == 0 {
+				println("warning: delayed pop without path")
+			} else {
+				*currentPath = (*currentPath)[:len(*currentPath)-1]
+			}
+		}
+	}
+}
+
+func (sect *FmpSector) readChunk(payload []byte) (*FmpChunk, error) {
 
 	// https://github.com/evanmiller/fmptools/blob/02eb770e59e0866dab213d80e5f7d88e17648031/HACKING
 	// https://github.com/Rasmus20B/fmplib/blob/66245e5269275724bacfe1437fb1f73bc587a2f3/src/fmp_format/chunk.rs#L57-L60
