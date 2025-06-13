@@ -6,6 +6,9 @@ import (
 )
 
 func (sect *FmpSector) readChunks() error {
+	if len(sect.Chunks) > 0 {
+		panic("chunks already read")
+	}
 	for {
 		pos := (sect.ID+2)*sectorSize - uint64(len(sect.Payload))
 
@@ -44,6 +47,7 @@ func (sect *FmpSector) readChunks() error {
 }
 
 func (sect *FmpSector) processChunks(dict *FmpDict, currentPath *[]uint64) {
+	sect.readChunks()
 	for _, chunk := range sect.Chunks {
 		switch chunk.Type {
 		case FMP_CHUNK_PATH_PUSH:
