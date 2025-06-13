@@ -25,14 +25,14 @@ func (ctx *FmpFile) readChunk(payload []byte) (*FmpChunk, error) {
 		chunk.Length = 3
 
 	case 0x02, 0x03, 0x04, 0x05:
-		valueLength := 2 * (payload[0] - 1)
+		valueLength := uint64(2 * (payload[0] - 1))
 		chunk.Type = FMP_CHUNK_SIMPLE_KEY_VALUE
 		chunk.Key = uint64(payload[1])
 		chunk.Value = payload[2 : 2+valueLength]
 		chunk.Length = 2 + uint64(valueLength)
 
 	case 0x06:
-		valueLength := payload[2]
+		valueLength := uint64(payload[2])
 		chunk.Type = FMP_CHUNK_SIMPLE_KEY_VALUE
 		chunk.Key = uint64(payload[1])
 		chunk.Value = payload[3 : 3+valueLength]
@@ -79,7 +79,7 @@ func (ctx *FmpFile) readChunk(payload []byte) (*FmpChunk, error) {
 			break
 		}
 
-		valueLength := payload[2]
+		valueLength := uint64(payload[2])
 		chunk.Type = FMP_CHUNK_SIMPLE_KEY_VALUE
 		chunk.Key = parseVarUint64(payload[1 : 1+2])
 		chunk.Value = payload[4 : 4+valueLength]
@@ -94,19 +94,19 @@ func (ctx *FmpFile) readChunk(payload []byte) (*FmpChunk, error) {
 		chunk.Length = 5 + valueLength
 
 	case 0x10, 0x11:
-		valueLength := 3 + (payload[0] - 0x10)
+		valueLength := 3 + (uint64(payload[0]) - 0x10)
 		chunk.Type = FMP_CHUNK_SIMPLE_DATA
 		chunk.Value = payload[1 : 1+valueLength]
 		chunk.Length = 1 + uint64(valueLength)
 
 	case 0x12, 0x13, 0x14, 0x15:
-		valueLength := 1 + 2*(payload[0]-0x10)
+		valueLength := 1 + 2*(uint64(payload[0])-0x10)
 		chunk.Type = FMP_CHUNK_SIMPLE_DATA
 		chunk.Value = payload[1 : 1+valueLength]
 		chunk.Length = 1 + uint64(valueLength)
 
 	case 0x16:
-		valueLength := payload[4]
+		valueLength := uint64(payload[4])
 		chunk.Type = FMP_CHUNK_LONG_KEY_VALUE
 		chunk.Key = parseVarUint64(payload[1 : 1+3])
 		chunk.Value = payload[5 : 5+valueLength]
@@ -125,26 +125,26 @@ func (ctx *FmpFile) readChunk(payload []byte) (*FmpChunk, error) {
 		chunk.Length = 2
 
 	case 0x1A, 0x1B, 0x1C, 0x1D:
-		valueLength := 2 * (payload[0] - 0x19)
+		valueLength := 2 * uint64(payload[0]-0x19)
 		chunk.Type = FMP_CHUNK_SIMPLE_DATA
 		chunk.Value = payload[1 : 1+valueLength]
-		chunk.Length = 1 + uint64(valueLength)
+		chunk.Length = 1 + valueLength
 
 	case 0x1E:
-		keyLength := payload[1]
-		valueLength := payload[2+keyLength]
+		keyLength := uint64(payload[1])
+		valueLength := uint64(payload[2+keyLength])
 		chunk.Type = FMP_CHUNK_LONG_KEY_VALUE
 		chunk.Key = parseVarUint64(payload[2 : 2+keyLength])
 		chunk.Value = payload[2+keyLength+1 : 2+keyLength+1+valueLength]
 		chunk.Length = 2 + uint64(keyLength) + 1 + uint64(valueLength)
 
 	case 0x1F:
-		keyLength := uint64(payload[1])
+		keyLength := uint64(uint64(payload[1]))
 		valueLength := parseVarUint64(payload[2+keyLength : 2+keyLength+2+1])
 		chunk.Type = FMP_CHUNK_LONG_KEY_VALUE
 		chunk.Key = parseVarUint64(payload[2 : 2+keyLength])
 		chunk.Value = payload[2+keyLength+2 : 2+keyLength+2+valueLength]
-		chunk.Length = 4 + uint64(keyLength) + uint64(valueLength)
+		chunk.Length = 2 + uint64(keyLength) + 2 + uint64(valueLength)
 
 	case 0x20:
 		if payload[1] == 0xFE {
@@ -174,7 +174,7 @@ func (ctx *FmpFile) readChunk(payload []byte) (*FmpChunk, error) {
 		chunk.Length = 4
 
 	case 0x38:
-		valueLength := payload[1]
+		valueLength := uint64(payload[1])
 		chunk.Type = FMP_CHUNK_PATH_PUSH
 		chunk.Value = payload[2 : 2+valueLength]
 		chunk.Length = 2 + uint64(valueLength)
