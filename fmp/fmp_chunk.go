@@ -58,11 +58,11 @@ func (ctx *FmpFile) readChunk(payload []byte) (*FmpChunk, error) {
 		chunk.Length = 4
 
 	case 0x0A, 0x0B, 0x0C, 0x0D:
-		valueLength := 2 * (payload[0] - 0x09)
+		valueLength := uint64(2 * (payload[0] - 0x09))
 		chunk.Type = FMP_CHUNK_SIMPLE_KEY_VALUE
 		chunk.Key = parseVarUint64(payload[1 : 1+2])
 		chunk.Value = payload[3 : 3+valueLength]
-		chunk.Length = 2 + uint64(valueLength)
+		chunk.Length = 3 + uint64(valueLength)
 
 	case 0x0E:
 		if payload[1] == 0xFE {
