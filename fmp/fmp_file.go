@@ -52,8 +52,12 @@ func OpenFile(path string) (*FmpFile, error) {
 		}
 
 		ctx.Sectors = append(ctx.Sectors, sector)
+
 		if sector.ID != 0 {
-			sector.processChunks(ctx.Dictionary, &currentPath)
+			err = sector.processChunks(ctx.Dictionary, &currentPath)
+			if err != nil {
+				return nil, err
+			}
 			ctx.Chunks = append(ctx.Chunks, sector.Chunks...)
 		}
 

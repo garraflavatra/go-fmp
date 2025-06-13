@@ -10,7 +10,7 @@ func (sect *FmpSector) readChunks() error {
 		panic("chunks already read")
 	}
 	for {
-		pos := (sect.ID+2)*sectorSize - uint64(len(sect.Payload))
+		pos := sect.ID*sectorSize - uint64(len(sect.Payload))
 
 		chunk, err := sect.readChunk(sect.Payload)
 		if chunk == nil {
@@ -46,8 +46,12 @@ func (sect *FmpSector) readChunks() error {
 	return nil
 }
 
-func (sect *FmpSector) processChunks(dict *FmpDict, currentPath *[]uint64) {
-	sect.readChunks()
+func (sect *FmpSector) processChunks(dict *FmpDict, currentPath *[]uint64) error {
+	err := sect.readChunks()
+	if err != nil {
+		return err
+	}
+
 	for _, chunk := range sect.Chunks {
 		switch chunk.Type {
 		case FMP_CHUNK_PATH_PUSH:
@@ -92,6 +96,7 @@ func (sect *FmpSector) processChunks(dict *FmpDict, currentPath *[]uint64) {
 			}
 		}
 	}
+	return nil
 }
 
 func (sect *FmpSector) readChunk(payload []byte) (*FmpChunk, error) {
