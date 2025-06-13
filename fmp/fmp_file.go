@@ -147,6 +147,10 @@ func (ctx *FmpFile) readSector() (*FmpSector, error) {
 		NextID:  parseVarUint64(buf[8 : 8+4]),
 	}
 
+	if ctx.currentSectorID == 0 && sector.PrevID > 0 {
+		return nil, ErrBadSectorHeader
+	}
+
 	payload := make([]byte, sectorPayloadSize)
 	n, err = ctx.stream.Read(payload)
 
