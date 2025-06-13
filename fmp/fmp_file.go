@@ -41,6 +41,7 @@ func OpenFile(path string) (*FmpFile, error) {
 	ctx.numSectors = uint64((ctx.FileSize / sectorSize) - 1)
 	ctx.Sectors = make([]*FmpSector, 0)
 	currentPath := make([]uint64, 0)
+	ctx.stream.Seek(2*sectorSize, io.SeekStart)
 
 	for {
 		sector, err := ctx.readSector()
@@ -99,7 +100,7 @@ func (ctx *FmpFile) readHeader() error {
 }
 
 func (ctx *FmpFile) readSector() (*FmpSector, error) {
-	println("------- Reading sector", ctx.currentSectorID)
+	println("---------- Reading sector", ctx.currentSectorID)
 	buf := make([]byte, sectorHeaderSize)
 	n, err := ctx.stream.Read(buf)
 

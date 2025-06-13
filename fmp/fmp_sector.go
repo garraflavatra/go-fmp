@@ -1,6 +1,7 @@
 package fmp
 
 import (
+	"encoding/hex"
 	"fmt"
 	"io"
 )
@@ -10,7 +11,11 @@ func (sect *FmpSector) readChunks() error {
 		panic("chunks already read")
 	}
 	for {
-		pos := sect.ID*sectorSize - uint64(len(sect.Payload))
+		pos := (sect.ID+1)*sectorSize - uint64(len(sect.Payload))
+
+		if sect.Payload[0] == 0x00 && sect.Payload[1] == 0x00 {
+			break
+		}
 
 		chunk, err := sect.readChunk(sect.Payload)
 		if chunk == nil {
@@ -24,7 +29,7 @@ func (sect *FmpSector) readChunks() error {
 			break
 		}
 		if err != nil {
-			println(string(sect.Payload))
+			println(hex.EncodeToString(sect.Payload))
 			println("break2")
 			return err
 		}
