@@ -10,8 +10,8 @@ func TestOpenFile(t *testing.T) {
 	if f.FileSize != 393216 {
 		t.Errorf("expected file size to be 393216, got %d", f.FileSize)
 	}
-	if f.numSectors != 96 {
-		t.Errorf("expected number of sectors to be 96, got %d", f.numSectors)
+	if f.numSectors != 95 {
+		t.Errorf("expected number of sectors to be 95, got %d", f.numSectors)
 	}
 	if f.CreatorName != "Pro 12.0" {
 		t.Errorf("expected application name to be 'Pro 12.0', got '%s'", f.CreatorName)

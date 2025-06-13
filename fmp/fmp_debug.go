@@ -6,6 +6,19 @@ import (
 )
 
 func (f *FmpFile) ToDebugFile(fname string) {
+	f_sectors, err := os.Create(fname + ".sectors")
+	if err != nil {
+		panic(err)
+	}
+	defer func() {
+		if err := f_sectors.Close(); err != nil {
+			panic(err)
+		}
+	}()
+	for _, sect := range f.Sectors {
+		fmt.Fprintf(f_sectors, "%s\n", sect.String())
+	}
+
 	f_chunks, err := os.Create(fname + ".chunks")
 	if err != nil {
 		panic(err)
@@ -31,8 +44,12 @@ func (f *FmpFile) ToDebugFile(fname string) {
 	fmt.Fprint(f_dicts, f.Dictionary.String())
 }
 
+func (sect *FmpSector) String() string {
+	return fmt.Sprintf("<Sector id=%v del=%v, lev=%v, prevID=%v, nextID=%v>", sect.ID, sect.Deleted, sect.Level, sect.PrevID, sect.NextID)
+}
+
 func (c *FmpChunk) String() string {
-	return fmt.Sprintf("<%v(%v)>", c.Type, c.Length)
+	return fmt.Sprintf("<Chunk type=%v len=%v>", c.Type, c.Length)
 }
 
 func (dict *FmpDict) string(parentPath string) string {

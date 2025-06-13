@@ -13,16 +13,21 @@ type FmpFile struct {
 	Chunks      []*FmpChunk
 	Dictionary  *FmpDict
 
-	numSectors uint
-	stream     io.ReadSeeker
+	numSectors      uint64 // Excludes the header sector
+	currentSectorID uint64
+
+	stream io.ReadSeeker
 }
 
 type FmpSector struct {
-	Deleted      bool
-	Level        uint8
-	PrevSectorID uint64
-	NextSectorID uint64
-	Chunks       []*FmpChunk
+	ID      uint64
+	Level   uint8
+	Deleted bool
+	PrevID  uint64
+	NextID  uint64
+	Prev    *FmpSector
+	Next    *FmpSector
+	Chunks  []*FmpChunk
 }
 
 type FmpChunk struct {

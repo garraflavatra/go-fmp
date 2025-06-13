@@ -2,7 +2,6 @@ package fmp
 
 import (
 	"bytes"
-	"encoding/hex"
 	"fmt"
 	"io"
 	"os"
@@ -10,13 +9,16 @@ import (
 )
 
 const (
+	sectorSize        = 4096
+	sectorHeaderSize  = 20
+	sectorPayloadSize = sectorSize - sectorHeaderSize
+
 	magicSequence = "\x00\x01\x00\x00\x00\x02\x00\x01\x00\x05\x00\x02\x00\x02\xC0"
 	hbamSequence  = "HBAM7"
 
-	magicSize        = len(magicSequence)
-	hbamSize         = len(hbamSequence)
-	sectorSize       = 4096
-	sectorHeaderSize = 20
+	headerSize = sectorSize
+	magicSize  = len(magicSequence)
+	hbamSize   = len(hbamSequence)
 )
 
 func OpenFile(path string) (*FmpFile, error) {
@@ -37,12 +39,11 @@ func OpenFile(path string) (*FmpFile, error) {
 	}
 
 	ctx.FileSize = uint(info.Size())
-	ctx.numSectors = ctx.FileSize / sectorSize
-	ctx.Sectors = make([]*FmpSector, ctx.numSectors)
-
+	ctx.numSectors = uint64((ctx.FileSize / sectorSize) - 1)
+	ctx.Sectors = make([]*FmpSector, 0)
 	currentPath := make([]uint64, 0)
 
-	for i := uint(0); i < ctx.numSectors; i++ {
+	for {
 		sector, err := ctx.readSector()
 		if err == io.EOF {
 			break
@@ -50,7 +51,7 @@ func OpenFile(path string) (*FmpFile, error) {
 		if err != nil {
 			return nil, err
 		}
-		ctx.Sectors[i] = sector
+		ctx.Sectors = append(ctx.Sectors, sector)
 		ctx.Chunks = append(ctx.Chunks, sector.Chunks...)
 
 		for _, chunk := range sector.Chunks {
@@ -89,13 +90,22 @@ func OpenFile(path string) (*FmpFile, error) {
 				// noop
 			}
 		}
+
+		ctx.currentSectorID = sector.NextID
+		if sector.NextID == 0 {
+			break
+		} else if sector.NextID > ctx.numSectors {
+			return nil, ErrBadHeader
+		} else {
+			ctx.stream.Seek(int64(sector.NextID*sectorSize), 0)
+		}
 	}
 
 	return ctx, nil
 }
 
 func (ctx *FmpFile) readHeader() error {
-	buf := make([]byte, sectorSize)
+	buf := make([]byte, headerSize)
 	_, err := ctx.stream.Read(buf)
 	if err != nil {
 		return err
@@ -130,26 +140,30 @@ func (ctx *FmpFile) readSector() (*FmpSector, error) {
 	}
 
 	sector := &FmpSector{
-		Deleted:      buf[0] != 0,
-		Level:        uint8(buf[1]),
-		PrevSectorID: parseVarUint64(buf[2:6]),
-		NextSectorID: parseVarUint64(buf[6:10]),
+		ID:      ctx.currentSectorID,
+		Deleted: buf[0] > 0,
+		Level:   uint8(buf[1]),
+		PrevID:  parseVarUint64(buf[4 : 4+4]),
+		NextID:  parseVarUint64(buf[8 : 8+4]),
 	}
 
-	payload := make([]byte, sectorSize-sectorHeaderSize)
+	payload := make([]byte, sectorPayloadSize)
 	n, err = ctx.stream.Read(payload)
-	if n != sectorSize-sectorHeaderSize {
+
+	if n != sectorPayloadSize {
 		return nil, ErrRead
 	}
 	if err != nil {
 		return nil, ErrRead
 	}
+
 	sector.Chunks = make([]*FmpChunk, 0)
 
 	for {
 		chunk, err := ctx.readChunk(payload)
+		fmt.Printf("0x%02X", payload[0])
 		if chunk != nil {
-			fmt.Printf("%s - (type%v)\n", hex.EncodeToString([]byte{payload[0]}), int(chunk.Type))
+			fmt.Printf(" (type %v)\n", int(chunk.Type))
 		}
 		if err == io.EOF {
 			break
