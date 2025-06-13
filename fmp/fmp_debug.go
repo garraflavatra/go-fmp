@@ -45,11 +45,11 @@ func (f *FmpFile) ToDebugFile(fname string) {
 }
 
 func (sect *FmpSector) String() string {
-	return fmt.Sprintf("<Sector id=%v del=%v, lev=%v, prevID=%v, nextID=%v>", sect.ID, sect.Deleted, sect.Level, sect.PrevID, sect.NextID)
+	return fmt.Sprintf("<Sector, id=%20v, del=%5v, lev=%1v, prevID=%20v, nextID=%20v>", sect.ID, sect.Deleted, sect.Level, sect.PrevID, sect.NextID)
 }
 
 func (c *FmpChunk) String() string {
-	return fmt.Sprintf("<Chunk type=%v len=%v>", c.Type, c.Length)
+	return fmt.Sprintf("<Chunk, type=%v, len=%v>", c.Type, c.Length)
 }
 
 func (dict *FmpDict) string(parentPath string) string {
