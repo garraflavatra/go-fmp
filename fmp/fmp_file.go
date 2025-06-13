@@ -89,6 +89,14 @@ func OpenFile(path string) (*FmpFile, error) {
 			case FMP_CHUNK_NOOP:
 				// noop
 			}
+
+			if chunk.Delayed {
+				if len(currentPath) == 0 {
+					println("warning: delayed pop without path")
+				} else {
+					currentPath = currentPath[:len(currentPath)-1]
+				}
+			}
 		}
 
 		ctx.currentSectorID = sector.NextID
@@ -129,6 +137,7 @@ func (ctx *FmpFile) readHeader() error {
 }
 
 func (ctx *FmpFile) readSector() (*FmpSector, error) {
+	println("------- Reading sector", ctx.currentSectorID)
 	buf := make([]byte, sectorHeaderSize)
 	n, err := ctx.stream.Read(buf)
 

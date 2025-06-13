@@ -31,11 +31,12 @@ type FmpSector struct {
 }
 
 type FmpChunk struct {
-	Type   FmpChunkType
-	Length uint64
-	Key    uint64 // If Type == FMP_CHUNK_SHORT_KEY_VALUE or FMP_CHUNK_LONG_KEY_VALUE
-	Index  uint64 // Segment index, if Type == FMP_CHUNK_SEGMENTED_DATA
-	Value  []byte
+	Type    FmpChunkType
+	Length  uint64
+	Key     uint64 // If Type == FMP_CHUNK_SHORT_KEY_VALUE or FMP_CHUNK_LONG_KEY_VALUE
+	Index   uint64 // Segment index, if Type == FMP_CHUNK_SEGMENTED_DATA
+	Value   []byte
+	Delayed bool
 }
 
 type FmpDict map[uint64]*FmpDictEntry
