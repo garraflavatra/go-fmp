@@ -2,7 +2,6 @@ package fmp
 
 import (
 	"encoding/hex"
-	"fmt"
 	"io"
 )
 
@@ -19,22 +18,20 @@ func (sect *FmpSector) readChunks() error {
 
 		chunk, err := sect.readChunk(sect.Payload)
 		if chunk == nil {
-			fmt.Printf("0x%02x (pos %v, unknown)\n", sect.Payload[0], pos)
+			debug("0x%02x (pos %v, unknown)\n", sect.Payload[0], pos)
 		} else {
-			fmt.Printf("0x%02x (pos %v, type %v)\n", sect.Payload[0], pos, int(chunk.Type))
+			debug("0x%02x (pos %v, type %v)\n", sect.Payload[0], pos, int(chunk.Type))
 		}
 
 		if err == io.EOF {
-			println("break1")
 			break
 		}
 		if err != nil {
-			println(hex.EncodeToString(sect.Payload))
-			println("break2")
+			debug("chunk error at sector %d", sect.ID)
+			debug(hex.EncodeToString(sect.Payload))
 			return err
 		}
 		if chunk == nil {
-			println("break3")
 			break
 		}
 		if chunk.Length == 0 {
@@ -92,14 +89,6 @@ func (sect *FmpSector) processChunks(dict *FmpDict, currentPath *[]uint64) error
 		case FMP_CHUNK_NOOP:
 			// noop
 		}
-
-		if chunk.Delayed {
-			if len(*currentPath) == 0 {
-				println("warning: delayed pop without path")
-			} else {
-				*currentPath = (*currentPath)[:len(*currentPath)-1]
-			}
-		}
 	}
 	return nil
 }
@@ -111,11 +100,6 @@ func (sect *FmpSector) readChunk(payload []byte) (*FmpChunk, error) {
 
 	chunk := &FmpChunk{}
 	chunkCode := payload[0]
-
-	if (chunkCode & 0xC0) == 0xC0 {
-		chunkCode &= 0x3F
-		chunk.Delayed = true
-	}
 
 	switch chunkCode {
 	case 0x00:

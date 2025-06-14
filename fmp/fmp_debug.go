@@ -5,6 +5,10 @@ import (
 	"os"
 )
 
+func debug(str string, args ...interface{}) {
+	fmt.Printf(str+"\n", args...)
+}
+
 func (f *FmpFile) ToDebugFile(fname string) {
 	f_sectors, err := os.Create(fname + ".sectors")
 	if err != nil {

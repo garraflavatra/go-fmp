@@ -100,7 +100,7 @@ func (ctx *FmpFile) readHeader() error {
 }
 
 func (ctx *FmpFile) readSector() (*FmpSector, error) {
-	println("---------- Reading sector", ctx.currentSectorID)
+	debug("---------- Reading sector %d", ctx.currentSectorID)
 	buf := make([]byte, sectorHeaderSize)
 	n, err := ctx.stream.Read(buf)
 

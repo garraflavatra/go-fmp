@@ -7,19 +7,19 @@ func (ctx *FmpFile) Tables() []*FmpTable {
 		if key != 3 {
 			continue
 		}
-		println("Found a 3")
+		debug("Found a 3")
 
 		for key, ent = range *ent.Children {
 			if key != 16 {
 				continue
 			}
-			println("Found a 3.16")
+			debug("Found a 3.16")
 
 			for key, ent = range *ent.Children {
 				if key != 5 {
 					continue
 				}
-				println("Found a 3.16.5")
+				debug("Found a 3.16.5")
 
 				for tablePath := range *ent.Children {
 					if key >= 128 {
@@ -27,7 +27,7 @@ func (ctx *FmpFile) Tables() []*FmpTable {
 					}
 
 					// Found a table!
-					println("Found a table at 3.16.5.", tablePath)
+					debug("Found a table at 3.16.5.%d", tablePath)
 				}
 			}
 		}
