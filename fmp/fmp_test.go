@@ -29,7 +29,7 @@ func TestTables(t *testing.T) {
 	}
 	tables := f.Tables()
 
-	expected := "WayDomains, WayProcesses, Untitled"
+	expected := "Untitled, WayDomains, WayProcesses"
 	tablesString := ""
 	for i, table := range tables {
 		tablesString += table.Name
