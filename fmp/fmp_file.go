@@ -40,7 +40,6 @@ func OpenFile(path string) (*FmpFile, error) {
 	ctx.FileSize = uint(info.Size())
 	ctx.numSectors = uint64((ctx.FileSize / sectorSize) - 1)
 	ctx.Sectors = make([]*FmpSector, 0)
-	currentPath := make([]uint64, 0)
 	ctx.stream.Seek(2*sectorSize, io.SeekStart)
 
 	for {
@@ -55,7 +54,7 @@ func OpenFile(path string) (*FmpFile, error) {
 		ctx.Sectors = append(ctx.Sectors, sector)
 
 		if sector.ID != 0 {
-			err = sector.processChunks(ctx.Dictionary, &currentPath)
+			err = sector.processChunks(ctx.Dictionary)
 			if err != nil {
 				return nil, err
 			}

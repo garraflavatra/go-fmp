@@ -29,14 +29,16 @@ func TestTables(t *testing.T) {
 	}
 	tables := f.Tables()
 
-	if len(tables) != 1 || tables[0].Name != "Untitled" {
-		tablesString := ""
-		for i, table := range tables {
-			tablesString += table.Name
-			if i < len(tables)-1 {
-				tablesString += ", "
-			}
+	expected := "WayDomains, WayProcesses, Untitled"
+	tablesString := ""
+	for i, table := range tables {
+		tablesString += table.Name
+		if i < len(tables)-1 {
+			tablesString += ", "
 		}
-		t.Errorf("expected tables to be 'Untitled', got '%s'", tablesString)
+	}
+
+	if tablesString != expected {
+		t.Errorf("expected tables to be '%s', got '%s'", expected, tablesString)
 	}
 }

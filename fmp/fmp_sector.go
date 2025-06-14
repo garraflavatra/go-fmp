@@ -2,6 +2,7 @@ package fmp
 
 import (
 	"encoding/hex"
+	"fmt"
 	"io"
 )
 
@@ -48,41 +49,48 @@ func (sect *FmpSector) readChunks() error {
 	return nil
 }
 
-func (sect *FmpSector) processChunks(dict *FmpDict, currentPath *[]uint64) error {
+func (sect *FmpSector) processChunks(dict *FmpDict) error {
 	err := sect.readChunks()
 	if err != nil {
 		return err
 	}
 
+	currentPath := make([]uint64, 0)
 	for _, chunk := range sect.Chunks {
 		switch chunk.Type {
-		case FMP_CHUNK_PATH_PUSH:
-			*currentPath = append(*currentPath, uint64(chunk.Value[0]))
+		case FMP_CHUNK_PATH_PUSH, FMP_CHUNK_PATH_PUSH_LONG:
+			currentPath = append(currentPath, parseVarUint64(chunk.Value))
+
+			s := ""
+			for _, ent := range currentPath {
+				s += fmt.Sprintf("%v. ", ent)
+			}
+			debug("path: %s", s)
 
 		case FMP_CHUNK_PATH_POP:
-			if len(*currentPath) > 0 {
-				*currentPath = (*currentPath)[:len(*currentPath)-1]
+			if len(currentPath) > 0 {
+				currentPath = (currentPath)[:len(currentPath)-1]
 			}
 
 		case FMP_CHUNK_SIMPLE_DATA:
-			dict.set(*currentPath, chunk.Value)
+			dict.SetValue(currentPath, chunk.Value)
 
 		case FMP_CHUNK_SEGMENTED_DATA:
 			// Todo: take index into account
-			dict.set(
-				*currentPath,
-				append(dict.getValue(*currentPath), chunk.Value...),
+			dict.SetValue(
+				currentPath,
+				append(dict.GetValue(currentPath), chunk.Value...),
 			)
 
 		case FMP_CHUNK_SIMPLE_KEY_VALUE:
-			dict.set(
-				append(*currentPath, uint64(chunk.Key)),
+			dict.SetValue(
+				append(currentPath, uint64(chunk.Key)),
 				chunk.Value,
 			)
 
 		case FMP_CHUNK_LONG_KEY_VALUE:
-			dict.set(
-				append(*currentPath, uint64(chunk.Key)), // todo: ??
+			dict.SetValue(
+				append(currentPath, uint64(chunk.Key)), // todo: ??
 				chunk.Value,
 			)
 
@@ -235,7 +243,7 @@ func (sect *FmpSector) readChunk(payload []byte) (*FmpChunk, error) {
 	case 0x38:
 		valueLength := uint64(payload[1])
 		chunk.Length = 2 + valueLength
-		chunk.Type = FMP_CHUNK_PATH_PUSH
+		chunk.Type = FMP_CHUNK_PATH_PUSH_LONG
 		chunk.Value = payload[2:chunk.Length]
 
 	case 0x3D, 0x40:

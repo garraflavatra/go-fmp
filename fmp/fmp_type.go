@@ -47,10 +47,11 @@ type FmpDictEntry struct {
 }
 
 type FmpTable struct {
+	ID   uint64
 	Name string
 }
 
-func (dict *FmpDict) get(path []uint64) *FmpDictEntry {
+func (dict *FmpDict) GetEntry(path []uint64) *FmpDictEntry {
 	for i, key := range path {
 		_, ok := (*dict)[key]
 		if !ok {
@@ -61,20 +62,23 @@ func (dict *FmpDict) get(path []uint64) *FmpDictEntry {
 			return (*dict)[key]
 		} else {
 			dict = (*dict)[key].Children
+			if dict == nil {
+				return nil
+			}
 		}
 	}
 	return nil
 }
 
-func (dict *FmpDict) getValue(path []uint64) []byte {
-	ent := dict.get(path)
+func (dict *FmpDict) GetValue(path []uint64) []byte {
+	ent := dict.GetEntry(path)
 	if ent != nil {
 		return ent.Value
 	}
 	return nil
 }
 
-func (dict *FmpDict) set(path []uint64, value []byte) {
+func (dict *FmpDict) SetValue(path []uint64, value []byte) {
 	for i, key := range path {
 		_, ok := (*dict)[key]
 		if !ok {

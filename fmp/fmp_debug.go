@@ -6,7 +6,7 @@ import (
 )
 
 func debug(str string, args ...interface{}) {
-	fmt.Printf(str+"\n", args...)
+	// fmt.Printf(str+"\n", args...)
 }
 
 func (f *FmpFile) ToDebugFile(fname string) {
