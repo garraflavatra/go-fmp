@@ -9,6 +9,20 @@ func debug(str string, args ...interface{}) {
 	// fmt.Printf(str+"\n", args...)
 }
 
+func dump(data []byte) {
+	for _, b := range data {
+		fmt.Printf("%02x ", b)
+	}
+	fmt.Println()
+}
+
+func dumpPath(path []uint64) {
+	for _, p := range path {
+		fmt.Printf("%v. ", p)
+	}
+	fmt.Println()
+}
+
 func (f *FmpFile) ToDebugFile(fname string) {
 	f_sectors, err := os.Create(fname + ".sectors")
 	if err != nil {

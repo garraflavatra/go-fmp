@@ -20,6 +20,20 @@ const (
 	hbamSize   = len(hbamSequence)
 )
 
+type FmpFile struct {
+	VersionDate time.Time
+	CreatorName string
+	FileSize    uint
+	Sectors     []*FmpSector
+	Chunks      []*FmpChunk
+	Dictionary  *FmpDict
+
+	numSectors      uint64 // Excludes the header sector
+	currentSectorID uint64
+
+	stream io.ReadSeeker
+}
+
 func OpenFile(path string) (*FmpFile, error) {
 	info, err := os.Stat(path)
 	if err != nil {

@@ -1,22 +1,6 @@
 package fmp
 
-import (
-	"slices"
-	"testing"
-)
-
-func slicesHaveSameElements[Type comparable](a, b []Type) bool {
-	if len(a) != len(b) {
-		return false
-	}
-	for _, av := range a {
-		found := slices.Contains(b, av)
-		if !found {
-			return false
-		}
-	}
-	return true
-}
+import "testing"
 
 func TestOpenFile(t *testing.T) {
 	f, err := OpenFile("../files/Untitled.fmp12")

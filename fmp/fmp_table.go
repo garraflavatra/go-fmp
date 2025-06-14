@@ -1,5 +1,10 @@
 package fmp
 
+type FmpTable struct {
+	ID   uint64
+	Name string
+}
+
 func (ctx *FmpFile) Tables() []*FmpTable {
 	tables := make([]*FmpTable, 0)
 	ent := ctx.Dictionary.GetEntry([]uint64{3, 16, 5})
