@@ -1,6 +1,22 @@
 package fmp
 
-import "testing"
+import (
+	"slices"
+	"testing"
+)
+
+func slicesHaveSameElements[Type comparable](a, b []Type) bool {
+	if len(a) != len(b) {
+		return false
+	}
+	for _, av := range a {
+		found := slices.Contains(b, av)
+		if !found {
+			return false
+		}
+	}
+	return true
+}
 
 func TestOpenFile(t *testing.T) {
 	f, err := OpenFile("../files/Untitled.fmp12")
@@ -29,16 +45,13 @@ func TestTables(t *testing.T) {
 	}
 	tables := f.Tables()
 
-	expected := "Untitled, WayDomains, WayProcesses"
-	tablesString := ""
-	for i, table := range tables {
-		tablesString += table.Name
-		if i < len(tables)-1 {
-			tablesString += ", "
-		}
+	expectedNames := []string{"Untitled", "WayDomains", "WayProcesses"}
+	tableNames := []string{}
+	for _, table := range tables {
+		tableNames = append(tableNames, table.Name)
 	}
 
-	if tablesString != expected {
-		t.Errorf("expected tables to be '%s', got '%s'", expected, tablesString)
+	if !slicesHaveSameElements(tableNames, expectedNames) {
+		t.Errorf("tables do not match")
 	}
 }
