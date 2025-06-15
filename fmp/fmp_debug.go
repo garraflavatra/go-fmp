@@ -5,22 +5,30 @@ import (
 	"os"
 )
 
+const debugging = false
+
 func debug(str string, args ...interface{}) {
-	// fmt.Printf(str+"\n", args...)
+	if debugging {
+		fmt.Printf(str+"\n", args...)
+	}
 }
 
 func dump(data []byte) {
-	for _, b := range data {
-		fmt.Printf("%02x ", b)
+	if debugging {
+		for _, b := range data {
+			fmt.Printf("%02x ", b)
+		}
+		fmt.Println()
 	}
-	fmt.Println()
 }
 
 func dumpPath(path []uint64) {
-	for _, p := range path {
-		fmt.Printf("%v. ", p)
+	if debugging {
+		for _, p := range path {
+			fmt.Printf("%v. ", p)
+		}
+		fmt.Println()
 	}
-	fmt.Println()
 }
 
 func (f *FmpFile) ToDebugFile(fname string) {
