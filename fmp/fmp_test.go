@@ -38,4 +38,30 @@ func TestTables(t *testing.T) {
 	if !slicesHaveSameElements(tableNames, expectedNames) {
 		t.Errorf("tables do not match")
 	}
+
+	var field FmpColumn
+	for _, table := range tables {
+		for _, column := range table.Columns {
+			if column.Name == "PrimaryKey" {
+				field = column
+				break
+			}
+		}
+	}
+
+	if field.Type != FmpFieldSimple {
+		t.Errorf("expected field type to be simple, but it is not")
+	}
+	if field.DataType != FmpDataText {
+		t.Errorf("expected field data type to be text, but it is not")
+	}
+	if field.StorageType != FmpFieldStorageRegular {
+		t.Errorf("expected field storage type to be regular, but it is not")
+	}
+	if !field.Indexed {
+		t.Errorf("expected field to be indexed, but it is not")
+	}
+	if field.AutoEnter != FmpAutoEnterCalculationReplacingExistingValue {
+		t.Errorf("expected field to have auto enter calculation replacing existing value, but it does not")
+	}
 }

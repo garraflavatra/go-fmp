@@ -1,8 +1,5 @@
 package fmp
 
-type FmpChunkType uint8
-type FmpCollation uint8
-type FmpScriptStepType uint8
 type FmpError string
 
 func (e FmpError) Error() string { return string(e) }
@@ -17,50 +14,94 @@ var (
 	ErrBadChunk           = FmpError("bad chunk")
 )
 
-const (
-	FmpChunkSimpleData     FmpChunkType = iota
-	FmpChunkSegmentedData  FmpChunkType = iota
-	FmpChunkSimpleKeyValue FmpChunkType = iota
-	FmpChunkLongKeyValue   FmpChunkType = iota
-	FmpChunkPathPush       FmpChunkType = iota
-	FmpChunkPathPushLong   FmpChunkType = iota
-	FmpChunkPathPop        FmpChunkType = iota
-	FmpChunkNoop           FmpChunkType = iota
-)
+type FmpChunkType uint8
 
 const (
-	FmpCollationEnglish    FmpCollation = 0x00
-	FmpCollationFrench     FmpCollation = 0x01
-	FmpCollationGerman     FmpCollation = 0x03
-	FmpCollationItalian    FmpCollation = 0x04
-	FmpCollationDutch      FmpCollation = 0x05
-	FmpCollationSwedish    FmpCollation = 0x07
-	FmpCollationSpanish    FmpCollation = 0x08
-	FmpCollationDanish     FmpCollation = 0x09
-	FmpCollationPortuguese FmpCollation = 0x0A
-	FmpCollationNorwegian  FmpCollation = 0x0C
-	FmpCollationFinnish    FmpCollation = 0x11
-	FmpCollationGreek      FmpCollation = 0x14
-	FmpCollationIcelandic  FmpCollation = 0x15
-	FmpCollationTurkish    FmpCollation = 0x18
-	FmpCollationRomanian   FmpCollation = 0x27
-	FmpCollationPolish     FmpCollation = 0x2a
-	FmpCollationHungarian  FmpCollation = 0x2b
-	FmpCollationRussian    FmpCollation = 0x31
-	FmpCollationCzech      FmpCollation = 0x38
-	FmpCollationUkrainian  FmpCollation = 0x3e
-	FmpCollationCroatian   FmpCollation = 0x42
-	FmpCollationCatalan    FmpCollation = 0x49
-	FmpCollationFinnishAlt FmpCollation = 0x62
-	FmpCollationSwedishAlt FmpCollation = 0x63
-	FmpCollationGermanAlt  FmpCollation = 0x64
-	FmpCollationSpanishAlt FmpCollation = 0x65
-	FmpCollationAscii      FmpCollation = 0x66
+	FmpChunkSimpleData FmpChunkType = iota
+	FmpChunkSegmentedData
+	FmpChunkSimpleKeyValue
+	FmpChunkLongKeyValue
+	FmpChunkPathPush
+	FmpChunkPathPushLong
+	FmpChunkPathPop
+	FmpChunkNoop
 )
+
+type FmpFieldType uint8
+
+const (
+	FmpFieldSimple      FmpFieldType = 1
+	FmpFieldCalculation FmpFieldType = 2
+	FmpFieldScript      FmpFieldType = 3
+)
+
+type FmpFieldStorageType uint8
+
+const (
+	FmpFieldStorageRegular             FmpFieldStorageType = 0
+	FmpFieldStorageGlobal              FmpFieldStorageType = 1
+	FmpFieldStorageCalculation         FmpFieldStorageType = 8
+	FmpFieldStorageUnstoredCalculation FmpFieldStorageType = 10
+)
+
+type FmpDataType uint8
+
+const (
+	FmpDataText      FmpDataType = 1
+	FmpDataNumber    FmpDataType = 2
+	FmpDataDate      FmpDataType = 3
+	FmpDataTime      FmpDataType = 4
+	FmpDataTS        FmpDataType = 5
+	FmpDataContainer FmpDataType = 6
+)
+
+type FmpAutoEnterOption uint8
+
+const (
+	FmpAutoEnterData FmpAutoEnterOption = iota
+	FmpAutoEnterSerialNumber
+	FmpAutoEnterCalculation
+	FmpAutoEnterCalculationReplacingExistingValue
+	FmpAutoEnterFromLastVisitedRecord
+	FmpAutoEnterCreateDate
+	FmpAutoEnterCreateTime
+	FmpAutoEnterCreateTS
+	FmpAutoEnterCreateName
+	FmpAutoEnterCreateAccountName
+	FmpAutoEnterModDate
+	FmpAutoEnterModTime
+	FmpAutoEnterModTS
+	FmpAutoEnterModName
+	FmpAutoEnterModAccountName
+)
+
+var autoEnterPresetMap = map[uint8]FmpAutoEnterOption{
+	0: FmpAutoEnterCreateDate,
+	1: FmpAutoEnterCreateTime,
+	2: FmpAutoEnterCreateTS,
+	3: FmpAutoEnterCreateName,
+	4: FmpAutoEnterCreateAccountName,
+	5: FmpAutoEnterModDate,
+	6: FmpAutoEnterModTime,
+	7: FmpAutoEnterModTS,
+	8: FmpAutoEnterModName,
+	9: FmpAutoEnterModAccountName,
+}
+
+var autoEnterOptionMap = map[uint8]FmpAutoEnterOption{
+	2:   FmpAutoEnterSerialNumber,
+	4:   FmpAutoEnterData,
+	8:   FmpAutoEnterCalculation,
+	16:  FmpAutoEnterFromLastVisitedRecord,
+	32:  FmpAutoEnterCalculation,
+	136: FmpAutoEnterCalculationReplacingExistingValue,
+}
+
+type FmpScriptStepType uint64
 
 const (
 	FmpScriptPerformScript                     FmpScriptStepType = 1
-	FmpScriptSaveACopyAsXml                    FmpScriptStepType = 3
+	FmpScriptSaveCopyAsXML                     FmpScriptStepType = 3
 	FmpScriptGoToNextField                     FmpScriptStepType = 4
 	FmpScriptGoToPreviousField                 FmpScriptStepType = 5
 	FmpScriptGoToLayout                        FmpScriptStepType = 6
@@ -115,7 +156,7 @@ const (
 	FmpScriptInsertText                        FmpScriptStepType = 61
 	FmpScriptPauseResumeScript                 FmpScriptStepType = 62
 	FmpScriptSendMail                          FmpScriptStepType = 63
-	FmpScriptSendDdeExecute                    FmpScriptStepType = 64
+	FmpScriptSendDDEExecute                    FmpScriptStepType = 64
 	FmpScriptDialPhone                         FmpScriptStepType = 65
 	FmpScriptSpeak                             FmpScriptStepType = 66
 	FmpScriptPerformApplescript                FmpScriptStepType = 67
@@ -165,7 +206,7 @@ const (
 	FmpScriptOpenFileOptions                   FmpScriptStepType = 114
 	FmpScriptAllowFormattingBar                FmpScriptStepType = 115
 	FmpScriptSetNextSerialValue                FmpScriptStepType = 116
-	FmpScriptExecuteSql                        FmpScriptStepType = 117
+	FmpScriptExecuteSQL                        FmpScriptStepType = 117
 	FmpScriptOpenHosts                         FmpScriptStepType = 118
 	FmpScriptMoveResizeWindow                  FmpScriptStepType = 119
 	FmpScriptArrangeAllWindows                 FmpScriptStepType = 120
@@ -242,7 +283,7 @@ const (
 	FmpScriptSetErrorLogging                   FmpScriptStepType = 200
 	FmpScriptConfigureNfcReading               FmpScriptStepType = 201
 	FmpScriptConfigureMachineLearningModel     FmpScriptStepType = 202
-	FmpScriptExecuteFilemakerDataApi           FmpScriptStepType = 203
+	FmpScriptExecuteFileMakerDataAPI           FmpScriptStepType = 203
 	FmpScriptOpenTransaction                   FmpScriptStepType = 205
 	FmpScriptCommitTransaction                 FmpScriptStepType = 206
 	FmpScriptRevertTransaction                 FmpScriptStepType = 207

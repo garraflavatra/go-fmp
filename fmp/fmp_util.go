@@ -9,7 +9,7 @@ type FmpDictEntry struct {
 	Children *FmpDict
 }
 
-func (dict *FmpDict) GetEntry(path []uint64) *FmpDictEntry {
+func (dict *FmpDict) GetEntry(path ...uint64) *FmpDictEntry {
 	for i, key := range path {
 		_, ok := (*dict)[key]
 		if !ok {
@@ -28,8 +28,8 @@ func (dict *FmpDict) GetEntry(path []uint64) *FmpDictEntry {
 	return nil
 }
 
-func (dict *FmpDict) GetValue(path []uint64) []byte {
-	ent := dict.GetEntry(path)
+func (dict *FmpDict) GetValue(path ...uint64) []byte {
+	ent := dict.GetEntry(path...)
 	if ent != nil {
 		return ent.Value
 	}

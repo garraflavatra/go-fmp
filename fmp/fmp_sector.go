@@ -85,7 +85,7 @@ func (sect *FmpSector) processChunks(dict *FmpDict) error {
 			// Todo: take index into account
 			dict.SetValue(
 				currentPath,
-				append(dict.GetValue(currentPath), chunk.Value...),
+				append(dict.GetValue(currentPath...), chunk.Value...),
 			)
 
 		case FmpChunkSimpleKeyValue:
