@@ -13,6 +13,7 @@ type FmpColumn struct {
 	DataType    FmpDataType
 	StorageType FmpFieldStorageType
 	AutoEnter   FmpAutoEnterOption
+	Repetitions uint8
 	Indexed     bool
 }
 
@@ -44,6 +45,7 @@ func (ctx *FmpFile) Tables() []*FmpTable {
 				Type:        FmpFieldType(flags[0]),
 				DataType:    FmpDataType(flags[1]),
 				StorageType: FmpFieldStorageType(flags[9]),
+				Repetitions: flags[25],
 				Indexed:     flags[8] == 128,
 			}
 

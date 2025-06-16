@@ -58,6 +58,9 @@ func TestTables(t *testing.T) {
 	if field.StorageType != FmpFieldStorageRegular {
 		t.Errorf("expected field storage type to be regular, but it is not")
 	}
+	if field.Repetitions != 1 {
+		t.Errorf("expected field repetition count to be 1, but it is %d", field.Repetitions)
+	}
 	if !field.Indexed {
 		t.Errorf("expected field to be indexed, but it is not")
 	}
