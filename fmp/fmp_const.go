@@ -97,6 +97,24 @@ var autoEnterOptionMap = map[uint8]FmpAutoEnterOption{
 	136: FmpAutoEnterCalculationReplacingExistingValue,
 }
 
+type FmpCalculationOperator byte
+
+const (
+	FmpCalcOperatorAdd         FmpCalculationOperator = '+'
+	FmpCalcOperatorSubtract    FmpCalculationOperator = '-'
+	FmpCalcOperatorMultiply    FmpCalculationOperator = '*'
+	FmpCalcOperatorDivide      FmpCalculationOperator = '/'
+	FmpCalcOperatorConcatenate FmpCalculationOperator = '&'
+)
+
+// var calcOperatorMap = map[uint8]FmpCalculationOperator{
+// 	0x25: FmpCalcOperatorAdd,
+// 	0x26: FmpCalcOperatorSubtract,
+// 	0x27: FmpCalcOperatorMultiply,
+// 	0x28: FmpCalcOperatorDivide,
+// 	0x50: FmpCalcOperatorConcatenate,
+// }
+
 type FmpScriptStepType uint64
 
 const (
