@@ -70,7 +70,7 @@ func (sect *FmpSector) processChunks(dict *FmpDict) error {
 	for _, chunk := range sect.Chunks {
 		switch chunk.Type {
 		case FmpChunkPathPush, FmpChunkPathPushLong:
-			currentPath = append(currentPath, parseVarUint64(chunk.Value))
+			currentPath = append(currentPath, decodeVarUint64(chunk.Value))
 			dumpPath(currentPath)
 
 		case FmpChunkPathPop:
@@ -134,7 +134,7 @@ func (sect *FmpSector) readChunk(payload []byte) (*FmpChunk, error) {
 		chunk.Value = payload[3:chunk.Length]
 
 	case 0x07:
-		valueLength := parseVarUint64(payload[2 : 2+2])
+		valueLength := decodeVarUint64(payload[2 : 2+2])
 		chunk.Length = min(4+valueLength, uint64(len(payload)))
 		chunk.Type = FmpChunkSegmentedData
 		chunk.Index = uint64(payload[1])
@@ -148,13 +148,13 @@ func (sect *FmpSector) readChunk(payload []byte) (*FmpChunk, error) {
 	case 0x09:
 		chunk.Length = 4
 		chunk.Type = FmpChunkSimpleKeyValue
-		chunk.Key = parseVarUint64(payload[1 : 1+2])
+		chunk.Key = decodeVarUint64(payload[1 : 1+2])
 		chunk.Value = payload[3:chunk.Length]
 
 	case 0x0A, 0x0B, 0x0C, 0x0D:
 		chunk.Length = 3 + 2*uint64(chunkCode-0x09)
 		chunk.Type = FmpChunkSimpleKeyValue
-		chunk.Key = parseVarUint64(payload[1 : 1+2])
+		chunk.Key = decodeVarUint64(payload[1 : 1+2])
 		chunk.Value = payload[3:chunk.Length]
 
 	case 0x0E:
@@ -167,17 +167,17 @@ func (sect *FmpSector) readChunk(payload []byte) (*FmpChunk, error) {
 
 		chunk.Length = 4 + uint64(payload[3])
 		chunk.Type = FmpChunkSimpleKeyValue
-		chunk.Key = parseVarUint64(payload[1 : 1+2])
+		chunk.Key = decodeVarUint64(payload[1 : 1+2])
 		chunk.Value = payload[4:chunk.Length]
 
 	case 0x0F:
-		valueLength := parseVarUint64(payload[3 : 3+2])
+		valueLength := decodeVarUint64(payload[3 : 3+2])
 		chunk.Length = uint64(len(payload))
 		if chunk.Length > 5+valueLength {
 			return nil, ErrBadChunk
 		}
 		chunk.Type = FmpChunkSegmentedData
-		chunk.Index = parseVarUint64(payload[1 : 1+2])
+		chunk.Index = decodeVarUint64(payload[1 : 1+2])
 		chunk.Value = payload[5:chunk.Length]
 
 	case 0x10, 0x11:
@@ -193,13 +193,13 @@ func (sect *FmpSector) readChunk(payload []byte) (*FmpChunk, error) {
 	case 0x16:
 		chunk.Length = 5 + uint64(payload[4])
 		chunk.Type = FmpChunkLongKeyValue
-		chunk.Key = parseVarUint64(payload[1 : 1+3])
+		chunk.Key = decodeVarUint64(payload[1 : 1+3])
 		chunk.Value = payload[5:chunk.Length]
 
 	case 0x17:
-		chunk.Length = 6 + parseVarUint64(payload[4:4+2])
+		chunk.Length = 6 + decodeVarUint64(payload[4:4+2])
 		chunk.Type = FmpChunkLongKeyValue
-		chunk.Key = parseVarUint64(payload[1 : 1+3])
+		chunk.Key = decodeVarUint64(payload[1 : 1+3])
 		chunk.Value = payload[6:chunk.Length]
 
 	case 0x19, 0x1A, 0x1B, 0x1C, 0x1D:
@@ -213,15 +213,15 @@ func (sect *FmpSector) readChunk(payload []byte) (*FmpChunk, error) {
 		valueLength := uint64(payload[2+keyLength])
 		chunk.Length = 2 + keyLength + 1 + valueLength
 		chunk.Type = FmpChunkLongKeyValue
-		chunk.Key = parseVarUint64(payload[2 : 2+keyLength])
+		chunk.Key = decodeVarUint64(payload[2 : 2+keyLength])
 		chunk.Value = payload[2+keyLength+1 : chunk.Length]
 
 	case 0x1F:
 		keyLength := uint64(payload[1])
-		valueLength := parseVarUint64(payload[2+keyLength : 2+keyLength+2+1])
+		valueLength := decodeVarUint64(payload[2+keyLength : 2+keyLength+2+1])
 		chunk.Length = 2 + keyLength + 2 + valueLength
 		chunk.Type = FmpChunkLongKeyValue
-		chunk.Key = parseVarUint64(payload[2 : 2+keyLength])
+		chunk.Key = decodeVarUint64(payload[2 : 2+keyLength])
 		chunk.Value = payload[2+keyLength+2 : chunk.Length]
 
 	case 0x20, 0xE0:

@@ -28,6 +28,7 @@ type FmpFile struct {
 	Chunks      []*FmpChunk
 	Dictionary  *FmpDict
 
+	tables          []*FmpTable
 	numSectors      uint64 // Excludes the header sector
 	currentSectorID uint64
 
@@ -85,6 +86,7 @@ func OpenFile(path string) (*FmpFile, error) {
 		}
 	}
 
+	ctx.readTables()
 	return ctx, nil
 }
 
@@ -128,8 +130,8 @@ func (ctx *FmpFile) readSector() (*FmpSector, error) {
 		ID:      ctx.currentSectorID,
 		Deleted: buf[0] > 0,
 		Level:   uint8(buf[1]),
-		PrevID:  parseVarUint64(buf[4 : 4+4]),
-		NextID:  parseVarUint64(buf[8 : 8+4]),
+		PrevID:  decodeVarUint64(buf[4 : 4+4]),
+		NextID:  decodeVarUint64(buf[8 : 8+4]),
 		Chunks:  make([]*FmpChunk, 0),
 	}
 
@@ -147,4 +149,62 @@ func (ctx *FmpFile) readSector() (*FmpSector, error) {
 		return nil, ErrRead
 	}
 	return sector, nil
+}
+
+func (ctx *FmpFile) readTables() {
+	tables := make([]*FmpTable, 0)
+	ent := ctx.Dictionary.GetEntry(3, 16, 5)
+
+	for path, tableEnt := range *ent.Children {
+		if path < 128 {
+			continue
+		}
+
+		table := &FmpTable{
+			ID:      path,
+			Name:    decodeString(tableEnt.Children.GetValue(16)),
+			Columns: map[uint64]*FmpColumn{},
+			Records: map[uint64]*FmpRecord{},
+		}
+
+		tables = append(tables, table)
+
+		for colPath, colEnt := range *ctx.Dictionary.GetChildren(table.ID, 3, 5) {
+			name := decodeString(colEnt.Children.GetValue(16))
+			flags := colEnt.Children.GetValue(2)
+
+			column := &FmpColumn{
+				Index:       colPath,
+				Name:        name,
+				Type:        FmpFieldType(flags[0]),
+				DataType:    FmpDataType(flags[1]),
+				StorageType: FmpFieldStorageType(flags[9]),
+				Repetitions: flags[25],
+				Indexed:     flags[8] == 128,
+			}
+
+			if flags[11] == 1 {
+				column.AutoEnter = autoEnterPresetMap[flags[4]]
+			} else {
+				column.AutoEnter = autoEnterOptionMap[flags[11]]
+			}
+
+			table.Columns[column.Index] = column
+		}
+
+		for recPath, recEnt := range *ctx.Dictionary.GetChildren(table.ID, 5) {
+			record := &FmpRecord{Index: recPath, Values: make(map[uint64]string)}
+			table.Records[record.Index] = record
+
+			if recPath > table.lastRecordID {
+				table.lastRecordID = recPath
+			}
+
+			for colIndex, value := range *recEnt.Children {
+				record.Values[colIndex] = decodeString(value.Value)
+			}
+		}
+	}
+
+	ctx.tables = tables
 }

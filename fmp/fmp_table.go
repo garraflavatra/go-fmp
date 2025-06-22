@@ -3,8 +3,10 @@ package fmp
 type FmpTable struct {
 	ID      uint64
 	Name    string
-	Columns map[uint64]FmpColumn
-	Records map[uint64]FmpRecord
+	Columns map[uint64]*FmpColumn
+	Records map[uint64]*FmpRecord
+
+	lastRecordID uint64
 }
 
 type FmpColumn struct {
@@ -19,60 +21,43 @@ type FmpColumn struct {
 }
 
 type FmpRecord struct {
+	Table  *FmpTable
 	Index  uint64
 	Values map[uint64]string
 }
 
-func (ctx *FmpFile) Tables() []*FmpTable {
-	tables := make([]*FmpTable, 0)
-	ent := ctx.Dictionary.GetEntry(3, 16, 5)
-
-	for path, tableEnt := range *ent.Children {
-		if path < 128 {
-			continue
-		}
-
-		table := &FmpTable{
-			ID:      path,
-			Name:    decodeFmpString(tableEnt.Children.GetValue(16)),
-			Columns: map[uint64]FmpColumn{},
-			Records: map[uint64]FmpRecord{},
-		}
-
-		tables = append(tables, table)
-
-		for colPath, colEnt := range *ctx.Dictionary.GetChildren(table.ID, 3, 5) {
-			name := decodeFmpString(colEnt.Children.GetValue(16))
-			flags := colEnt.Children.GetValue(2)
-
-			column := FmpColumn{
-				Index:       colPath,
-				Name:        name,
-				Type:        FmpFieldType(flags[0]),
-				DataType:    FmpDataType(flags[1]),
-				StorageType: FmpFieldStorageType(flags[9]),
-				Repetitions: flags[25],
-				Indexed:     flags[8] == 128,
-			}
-
-			if flags[11] == 1 {
-				column.AutoEnter = autoEnterPresetMap[flags[4]]
-			} else {
-				column.AutoEnter = autoEnterOptionMap[flags[11]]
-			}
-
-			table.Columns[column.Index] = column
-		}
-
-		for recPath, recEnt := range *ctx.Dictionary.GetChildren(table.ID, 5) {
-			record := FmpRecord{Index: recPath, Values: make(map[uint64]string)}
-			table.Records[record.Index] = record
-
-			for colIndex, value := range *recEnt.Children {
-				record.Values[colIndex] = decodeFmpString(value.Value)
-			}
+func (ctx *FmpFile) Table(name string) *FmpTable {
+	for _, table := range ctx.tables {
+		if table.Name == name {
+			return table
 		}
 	}
+	return nil
+}
 
-	return tables
+func (t *FmpTable) Column(name string) *FmpColumn {
+	for _, column := range t.Columns {
+		if column.Name == name {
+			return column
+		}
+	}
+	return nil
+}
+
+func (t *FmpTable) NewRecord(values map[string]string) (*FmpRecord, error) {
+	vals := make(map[uint64]string)
+	for k, v := range values {
+		col := t.Column(k)
+		vals[col.Index] = v
+	}
+
+	id := t.lastRecordID + 1
+	t.lastRecordID = id
+	t.Records[id] = &FmpRecord{Table: t, Index: id, Values: vals}
+
+	return t.Records[id], nil
+}
+
+func (r *FmpRecord) Value(name string) string {
+	return r.Values[r.Table.Column(name).Index]
 }
