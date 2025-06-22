@@ -3,11 +3,12 @@ package fmp
 type FmpTable struct {
 	ID      uint64
 	Name    string
-	Columns []FmpColumn
+	Columns map[uint64]FmpColumn
+	Records map[uint64]FmpRecord
 }
 
 type FmpColumn struct {
-	ID          uint64
+	Index       uint64
 	Name        string
 	Type        FmpFieldType
 	DataType    FmpDataType
@@ -15,6 +16,11 @@ type FmpColumn struct {
 	AutoEnter   FmpAutoEnterOption
 	Repetitions uint8
 	Indexed     bool
+}
+
+type FmpRecord struct {
+	Index  uint64
+	Values map[uint64]string
 }
 
 func (ctx *FmpFile) Tables() []*FmpTable {
@@ -28,19 +34,19 @@ func (ctx *FmpFile) Tables() []*FmpTable {
 
 		table := &FmpTable{
 			ID:      path,
-			Name:    decodeByteSeq(tableEnt.Children.GetValue(16)),
-			Columns: make([]FmpColumn, 0),
+			Name:    decodeFmpString(tableEnt.Children.GetValue(16)),
+			Columns: map[uint64]FmpColumn{},
+			Records: map[uint64]FmpRecord{},
 		}
 
 		tables = append(tables, table)
-		colEnt := ctx.Dictionary.GetEntry(table.ID, 3, 5)
 
-		for colPath, colEnt := range *colEnt.Children {
-			name := decodeByteSeq(colEnt.Children.GetValue(16))
+		for colPath, colEnt := range *ctx.Dictionary.GetChildren(table.ID, 3, 5) {
+			name := decodeFmpString(colEnt.Children.GetValue(16))
 			flags := colEnt.Children.GetValue(2)
 
 			column := FmpColumn{
-				ID:          colPath,
+				Index:       colPath,
 				Name:        name,
 				Type:        FmpFieldType(flags[0]),
 				DataType:    FmpDataType(flags[1]),
@@ -55,7 +61,16 @@ func (ctx *FmpFile) Tables() []*FmpTable {
 				column.AutoEnter = autoEnterOptionMap[flags[11]]
 			}
 
-			table.Columns = append(table.Columns, column)
+			table.Columns[column.Index] = column
+		}
+
+		for recPath, recEnt := range *ctx.Dictionary.GetChildren(table.ID, 5) {
+			record := FmpRecord{Index: recPath, Values: make(map[uint64]string)}
+			table.Records[record.Index] = record
+
+			for colIndex, value := range *recEnt.Children {
+				record.Values[colIndex] = decodeFmpString(value.Value)
+			}
 		}
 	}
 

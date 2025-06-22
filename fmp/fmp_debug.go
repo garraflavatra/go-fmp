@@ -3,6 +3,7 @@ package fmp
 import (
 	"fmt"
 	"os"
+	"slices"
 )
 
 const debugging = false
@@ -80,7 +81,15 @@ func (c *FmpChunk) String() string {
 
 func (dict *FmpDict) string(parentPath string) string {
 	s := ""
-	for k, v := range *dict {
+	keys := make([]uint64, 0, len(*dict))
+
+	for k := range *dict {
+		keys = append(keys, k)
+	}
+	slices.Sort(keys)
+
+	for _, k := range keys {
+		v := (*dict)[k]
 		s += fmt.Sprintf("%v%v: %v\n", parentPath, k, string(v.Value))
 
 		if v.Children != nil {

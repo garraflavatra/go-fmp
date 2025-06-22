@@ -36,6 +36,14 @@ func (dict *FmpDict) GetValue(path ...uint64) []byte {
 	return nil
 }
 
+func (dict *FmpDict) GetChildren(path ...uint64) *FmpDict {
+	ent := dict.GetEntry(path...)
+	if ent != nil {
+		return ent.Children
+	}
+	return &FmpDict{}
+}
+
 func (dict *FmpDict) SetValue(path []uint64, value []byte) {
 	for i, key := range path {
 		_, ok := (*dict)[key]
@@ -61,7 +69,7 @@ func parseVarUint64(payload []byte) uint64 {
 	return length
 }
 
-func decodeByteSeq(payload []byte) string {
+func decodeFmpString(payload []byte) string {
 	result := ""
 	for i := range payload {
 		result += string(payload[i] ^ 0x5A)

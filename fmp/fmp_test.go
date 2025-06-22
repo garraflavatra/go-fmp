@@ -7,11 +7,11 @@ func TestOpenFile(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if f.FileSize != 393216 {
+	if f.FileSize != 229376 {
 		t.Errorf("expected file size to be 393216, got %d", f.FileSize)
 	}
-	if f.numSectors != 95 {
-		t.Errorf("expected number of sectors to be 95, got %d", f.numSectors)
+	if f.numSectors != 55 {
+		t.Errorf("expected number of sectors to be 55, got %d", f.numSectors)
 	}
 	if f.CreatorName != "Pro 12.0" {
 		t.Errorf("expected application name to be 'Pro 12.0', got '%s'", f.CreatorName)
@@ -29,7 +29,7 @@ func TestTables(t *testing.T) {
 	}
 	tables := f.Tables()
 
-	expectedNames := []string{"Untitled", "WayDomains", "WayProcesses"}
+	expectedNames := []string{"Untitled"}
 	tableNames := []string{}
 	for _, table := range tables {
 		tableNames = append(tableNames, table.Name)
@@ -66,5 +66,11 @@ func TestTables(t *testing.T) {
 	}
 	if field.AutoEnter != FmpAutoEnterCalculationReplacingExistingValue {
 		t.Errorf("expected field to have auto enter calculation replacing existing value, but it does not")
+	}
+	if len(tables[0].Records) != 3 {
+		t.Errorf("expected table to have 3 records, but it has %d", len(tables[0].Records))
+	}
+	if tables[0].Records[1].Values[1] != "629FAA83-50D8-401F-A560-C8D45217D17B" {
+		t.Errorf("first record has an incorrect ID '%s'", tables[0].Records[0].Values[0])
 	}
 }
