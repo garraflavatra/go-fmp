@@ -10,8 +10,10 @@ func TestOpenFile(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	defer f.Close()
+
 	if f.FileSize != 229376 {
-		t.Errorf("expected file size to be 393216, got %d", f.FileSize)
+		t.Errorf("expected file size to be 229376, got %d", f.FileSize)
 	}
 	if f.numSectors != 55 {
 		t.Errorf("expected number of sectors to be 55, got %d", f.numSectors)
@@ -22,6 +24,7 @@ func TestOpenFile(t *testing.T) {
 	if f.VersionDate.Format("2006-01-02") != "2025-01-11" {
 		t.Errorf("expected version date to be '2025-01-11', got '%s'", f.VersionDate.Format("2006-01-02"))
 	}
+
 	f.ToDebugFile("../private/output")
 }
 
@@ -30,6 +33,7 @@ func TestTables(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	defer f.Close()
 
 	expectedNames := []string{"Untitled"}
 	tableNames := []string{}

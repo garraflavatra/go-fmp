@@ -32,7 +32,7 @@ type FmpFile struct {
 	numSectors      uint64 // Excludes the header sector
 	currentSectorID uint64
 
-	stream io.ReadSeeker
+	stream *os.File
 }
 
 func OpenFile(path string) (*FmpFile, error) {
@@ -41,11 +41,10 @@ func OpenFile(path string) (*FmpFile, error) {
 		return nil, err
 	}
 
-	stream, err := os.Open(path)
+	stream, err := os.OpenFile(path, os.O_RDWR, 0)
 	if err != nil {
 		return nil, err
 	}
-	defer stream.Close()
 
 	ctx := &FmpFile{stream: stream, Dictionary: &FmpDict{}}
 	if err := ctx.readHeader(); err != nil {
@@ -88,6 +87,10 @@ func OpenFile(path string) (*FmpFile, error) {
 
 	ctx.readTables()
 	return ctx, nil
+}
+
+func (ctx *FmpFile) Close() {
+	ctx.stream.Close()
 }
 
 func (ctx *FmpFile) readHeader() error {
@@ -207,4 +210,44 @@ func (ctx *FmpFile) readTables() {
 	}
 
 	ctx.tables = tables
+}
+
+func (ctx *FmpFile) NewSector() (*FmpSector, error) {
+	id := uint64(len(ctx.Sectors)) + 1
+	prevID := id - 2
+
+	ctx.Sectors[prevID].NextID = uint64(id)
+	_, err := ctx.stream.WriteAt(encodeUint(4, int(id)), int64((id-1)*sectorSize)+4)
+
+	if err != nil {
+		return nil, err
+	}
+
+	sector := &FmpSector{
+		ID:      uint64(id),
+		Deleted: false,
+		Level:   0,
+		PrevID:  prevID,
+		NextID:  0,
+		Chunks:  make([]*FmpChunk, 0),
+	}
+
+	ctx.Sectors = append(ctx.Sectors, sector)
+
+	sectorBuf := make([]byte, sectorSize)
+	sectorBuf[0] = 0 // deleted
+	sectorBuf[1] = 0 // level
+	writeToSlice(sectorBuf, 4, encodeUint(4, int(prevID))...)
+	writeToSlice(sectorBuf, 8, encodeUint(4, int(id))...)
+
+	_, err = ctx.stream.WriteAt(sectorBuf, int64((id+1)*sectorSize))
+	if err != nil {
+		return nil, err
+	}
+	return sector, nil
+}
+
+func (ctx *FmpFile) setValue(path []uint64, value []byte) {
+	// ctx.Dictionary.set(path, value)
+
 }

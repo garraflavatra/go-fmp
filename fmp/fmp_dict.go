@@ -42,7 +42,7 @@ func (dict *FmpDict) GetChildren(path ...uint64) *FmpDict {
 	return &FmpDict{}
 }
 
-func (dict *FmpDict) SetValue(path []uint64, value []byte) {
+func (dict *FmpDict) set(path []uint64, value []byte) {
 	for i, key := range path {
 		_, ok := (*dict)[key]
 		if !ok {

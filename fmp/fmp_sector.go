@@ -79,23 +79,23 @@ func (sect *FmpSector) processChunks(dict *FmpDict) error {
 			}
 
 		case FmpChunkSimpleData:
-			dict.SetValue(currentPath, chunk.Value)
+			dict.set(currentPath, chunk.Value)
 
 		case FmpChunkSegmentedData:
 			// Todo: take index into account
-			dict.SetValue(
+			dict.set(
 				currentPath,
 				append(dict.GetValue(currentPath...), chunk.Value...),
 			)
 
 		case FmpChunkSimpleKeyValue:
-			dict.SetValue(
+			dict.set(
 				append(currentPath, uint64(chunk.Key)),
 				chunk.Value,
 			)
 
 		case FmpChunkLongKeyValue:
-			dict.SetValue(
+			dict.set(
 				append(currentPath, uint64(chunk.Key)), // todo: ??
 				chunk.Value,
 			)

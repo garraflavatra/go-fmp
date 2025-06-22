@@ -24,3 +24,18 @@ func decodeString(payload []byte) string {
 	}
 	return result
 }
+
+func encodeUint(size uint, value int) []byte {
+	result := make([]byte, size)
+	for i := range size {
+		result[i] = byte(value & 0xFF)
+		value >>= 8
+	}
+	return result
+}
+
+func writeToSlice(slice []byte, start int, payload ...byte) {
+	for i := range payload {
+		slice[start+i] = payload[i]
+	}
+}
