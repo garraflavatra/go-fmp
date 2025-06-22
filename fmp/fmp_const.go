@@ -14,6 +14,12 @@ var (
 	ErrBadChunk           = FmpError("bad chunk")
 )
 
+const (
+	FmpDateLayout     = "02/01/2006"
+	FmpTimeLayout     = "15:04:05"
+	FmpDateTimeLayout = "02/01/2006 15:04:05"
+)
+
 type FmpChunkType uint8
 
 const (
