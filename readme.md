@@ -1,3 +1,7 @@
+[**This project has moved to Codeberg!**](https://codeberg.org/romein/go-fmp)
+
+---
+
 # go-fmp
 
 FileMaker file (.fmp12) parser and writer written in [Go](https://go.dev), inspired by and based on [fmptools](https://github.com/evanmiller/fmptools), [fmplib](https://github.com/Rasmus20B/fmplib), and [fp5dump](https://github.com/qwesda/fp5dump).
