@@ -1,4 +1,4 @@
-[**This project has moved to Codeberg!**](https://codeberg.org/romein/go-fmp)
+[**This project has moved to Codeberg!**](https://codeberg.org/romein/go-fmp) Please do feel free to contribute there :)
 
 ---
 
